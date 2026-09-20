@@ -1,0 +1,28 @@
+{
+  "camera": {
+    "region": [
+      215,
+      20,
+      915,
+      20
+    ],
+    "exposure": -14,
+    "locked": true,
+    "index": 0
+  },
+  "sweep": {
+    "gap_ms": 2500,
+    "capture_delay_ms": 2600,
+    "multi_sample": true,
+    "intervals": "200, 600, 1500"
+  },
+  "window": {
+    "x": 98,
+    "y": 96,
+    "width": 952,
+    "height": 884
+  },
+  "audio": {
+    "volume": 50
+  }
+}
