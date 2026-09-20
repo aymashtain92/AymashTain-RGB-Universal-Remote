@@ -1,16 +1,16 @@
 # AymashTain LED RGB Remote — Developer README
 
 **Version:** v0.51 Alpha  
-**Status:** Active development  
-**Project folder:** `D:\AymashTain LED Remote`  
+**Project path:** `D:\Coding projects\aymashtain-led-remote-Source`  
 **Contact:** ayman.attia.ab@gmail.com  
-**GitHub:** https://github.com/aymashtain92
+**GitHub:** https://github.com/aymashtain92  
+**Repo:** https://github.com/aymashtain92/AymashTain-RGB-Universal-Remote
 
 ---
 
-## What this is
+## 1. What this is
 
-Windows desktop app for controlling cheap BLE LED strips that use the MR Star app and related clone controllers.
+Windows desktop app for controlling cheap BLE LED strips using the MR Star protocol family.
 
 Target hardware:
 
@@ -26,104 +26,180 @@ Known strips:
 
 ---
 
-## Quick start
+## 2. Structure
 
-**For users:**  
-Run `AymashTain LED Remote.exe`. Keep the `_internal` folder next to it.
+```text
+main.py                      → aymashtain.app:main
+aymashtain/
+  app.py                     bootstrap + qasync loop
+  config.py                  Settings (JSON)
+  events.py                  EventBus + SessionLogger
+  paths.py                   data_dir, logs_dir, db_path
+  ble/manager.py             BleManager (serialized per-device queue)
+  protocol/mrstar.py         encode/decode, SCROLL_MACRO
+  storage/db.py              profiles, buttons, history, devices
+  vision/camera.py           CameraVerifier, Sample
+  audio/engine.py            AudioEngine
+  ui/main_window.py          MainWindow, menus, heartbeat
+  ui/theme.py                dark / light
+  ui/context.py              AppContext
+  ui/widgets/                color_wheel, strip_preview
+  ui/tabs/                   8 tabs
+tests/                       pytest suite
+AymashTain LED Remote.spec   PyInstaller spec
+build_exe.bat, run.bat, repair.ps1, session.bat
+ai_sync.py, update_github.bat
+requirements.txt, pyproject.toml
+README.md, CREDITS.md
+AI_SYNC_PACK/
+```
 
-**For developers:**
+---
+
+## 3. Environment
+
+- Windows 10 Pro 10.0.19045.6466
+- Python 3.14.7 (`C:\Users\aymas\AppData\Local\Python\pythoncore-3.14-64\python.exe`)
+- Bleak 3.0.2
+- NumPy 2.5.3
+- OpenCV 5.0.0.93
+- Data folder: `%LOCALAPPDATA%\AymashTain`
+- Override: `AYMASHTAIN_DATA_DIR`
+
+---
+
+## 4. Install and run
 
 ```powershell
-cd "D:\AymashTain LED Remote"
+cd "D:\Coding projects\aymashtain-led-remote-Source"
 python -m pip install -r .\requirements.txt
 python .\main.py
 ```
 
-**Hardware test:**
+Or double-click `run.bat`.
+
+Repair (recreates `.venv`, reinstalls, checks Bluetooth / audio / camera):
 
 ```powershell
-python .\hardware_test.py
+powershell -ExecutionPolicy Bypass -File .\repair.ps1
 ```
 
-**Compile check:**
+---
+
+## 5. Compile check
+
+After replacing any file:
 
 ```powershell
 python -m py_compile .\main.py
-python -m py_compile .\mrstar_protocol.py
-python -m py_compile .\hardware_test.py
+python -m py_compile .\aymashtain\app.py
+python -m py_compile .\aymashtain\ble\manager.py
+python -m py_compile .\aymashtain\protocol\mrstar.py
+```
+
+No output = success.
+
+---
+
+## 6. Tests
+
+```powershell
+python -m pytest -q
+python -m ruff check .
 ```
 
 ---
 
-## How to use AI updates
+## 7. Logs and data
 
-This project uses an `AI_SYNC_PACK` folder to keep every AI assistant in sync.  
-The full step‑by‑step guide is in:
+Data folder:
 
 ```text
-AI_SYNC_PACK\07_HOW_TO_USE_AI_SYNC.md
+%LOCALAPPDATA%\AymashTain
 ```
 
-Read that file first. It tells you exactly what to upload to an AI, what prompt to use, and how to update the pack after every change.
+Contents:
 
----
-
-## License
-
-This project is released under the **MIT License**.  
-See `LICENSE.txt` for the full text.
-
-Third‑party libraries (PySide6, bleak, qasync, sounddevice, numpy, opencv‑python, etc.) have their own licenses.  
-Check each library’s documentation before redistribution.
-
----
-
-## Current status
-
-- `mrstar_protocol.py` — verified.
-- `hardware_test.py` — compiled and run. Passed at BLE transport level.
-- `main.py` — still old, unsafe queue. Replacement pending.
-- Camera — disabled, not calibrated.
-- Hidden‑feature lab — not built.
-- Global BLE queue — not built in `main.py`.
-- Auto‑save logs on close — not built in `main.py`.
-
----
-
-## Logs
-
-Logs are in:
-
-```text
-D:\AymashTain LED Remote\logs\
-```
-
-Latest hardware test:
-
-```text
-hardware_test_20260919_211043.log
-hardware_test_20260919_211043.json
-hardware_test_20260919_211043.csv
-```
+- `config.json` — settings
+- `aymashtain.db` — profiles, buttons, history, devices
+- `logs/session_YYYYMMDD_HHMMSS.log`
+- `logs/session_YYYYMMDD_HHMMSS.json`
+- `logs/session_YYYYMMDD_HHMMSS.csv`
 
 Do not overwrite old logs.
 
 ---
 
-## Troubleshooting
+## 8. Build EXE
 
-See the full guide in `07_HOW_TO_USE_AI_SYNC.md`.  
-Quick tips:
+```powershell
+.\build_exe.bat
+```
 
-- No devices: turn off phone Bluetooth, close MR Star app, power‑cycle strips.
-- No reaction: confirm FFF3 UUID, use `BC0406` color, `BC0506` brightness.
-- Far strip disconnects: increase inter‑device delay.
-- Camera: install `opencv-python`, try index 0/1/2.
-- Audio: look for Line In / AUX / Stereo Mix / VoiceMeeter.
+Result: `dist\AymashTain LED Remote\AymashTain LED Remote.exe` plus `_internal\`.
+
+Keep the `.exe` and the `_internal` folder together.
 
 ---
 
-## Contact
+## 9. How to use AI updates
 
-Email: ayman.attia.ab@gmail.com  
-GitHub: https://github.com/aymashtain92
+See `AI_SYNC_PACK\07_HOW_TO_USE_AI_SYNC.md`.  
+Short version: upload the whole `AI_SYNC_PACK` folder + the file you want changed + the prompt from `02_UNIVERSAL_AI_PROMPT.md` and tell the AI what to do.
+
+---
+
+## 10. Current status
+
+Working:
+
+- App launches.
+- 3/3 strips connect.
+- 54 frames sent, 0 failed.
+- BleManager serialized queue.
+- Colour / brightness separated.
+- Session logger.
+
+Not built yet:
+
+- Hidden-feature laboratory.
+- Camera ROI visual calibration.
+- Exposure / white balance lock.
+- 150-LED preview.
+- Profile import / export.
+- About dialog with credits.
+- Version reconciliation (`1.0.0` vs `v0.51 Alpha`).
+
+---
+
+## 11. Troubleshooting
+
+- **No devices:** phone Bluetooth off, MR Star app closed, power-cycle strips.
+- **No reaction:** confirm FFF3 UUID, `BC0406` colour, `BC0506` brightness.
+- **Far strip drops:** raise inter-device delay in `config.json` or the GUI.
+- **Pale colours:** brightness inside colour frame — check `protocol/mrstar.py`.
+- **Camera:** install `opencv-python`, try camera index 0/1/2, calibrate ROI.
+- **Audio:** pick the right device. Look for Line In / AUX / Stereo Mix / VoiceMeeter.
+
+---
+
+## 12. License
+
+MIT License. See `LICENSE.txt`.  
+Third-party libraries keep their own licenses. See `CREDITS.md`.
+
+---
+
+## 13. Contact
+
+- Email: ayman.attia.ab@gmail.com
+- GitHub: https://github.com/aymashtain92
+
+When reporting an issue, include:
+
+- Windows version
+- Python version
+- File name
+- Exact error text
+- Log from `%LOCALAPPDATA%\AymashTain\logs\`
+- What you did before the error

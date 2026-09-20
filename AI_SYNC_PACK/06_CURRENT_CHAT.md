@@ -1,4 +1,4 @@
-# Current Chat Summary — 2026-09-20
+# Current Chat Summary — 2026-09-21
 
 This file records the current conversation between the user and ChatGPT.
 
@@ -6,61 +6,59 @@ This file records the current conversation between the user and ChatGPT.
 
 ## User request
 
-The user asked whether the `00_`–`06_` AI_SYNC_PACK files are 100% up to date.
+- Confirm which project folder is the real one.
+- Rewrite `00`–`06` of the `AI_SYNC_PACK` to match the real project.
 
-The user also asked:
+---
 
-- Should updates be added at the start or end of each file?
-- How will it look?
-- Can you simply give the full updated files to copy-paste and overwrite?
+## Decision made
+
+Real project folder:
+
+```text
+D:\Coding projects\aymashtain-led-remote-Source
+```
+
+This is a **package** project (Devin AI rewrite), not the flat `main.py` version.
+
+The `AI_SYNC_PACK` was previously describing the flat project. It is now corrected.
 
 ---
 
 ## What this chat did
 
-- Reviewed the latest conversations and logs.
-- Confirmed the pack is not 100% up to date.
-- Identified missing updates:
-  - `mrstar_protocol.py` verified.
-  - `hardware_test.py` compiled and run.
-  - Hardware test passed at BLE transport level.
-  - All 3 strips connected.
-  - All commands accepted.
-  - Logs saved:
-    - `hardware_test_20260919_211043.log`
-    - `hardware_test_20260919_211043.json`
-    - `hardware_test_20260919_211043.csv`
-  - `main.py` still old and unsafe.
-  - Latest event log shows overlapping Music Sync and duplicate Scroll macros.
-  - Camera still disabled.
-  - Hidden-feature lab still not built.
-  - Global queue and auto-save logs still not built.
-- Provided full replacement content for `00_` through `06_`.
-- Instructed user to overwrite each file completely, not add at start or end.
+- Confirmed from screenshots that the package app runs.
+- Confirmed 3/3 strips connect, 54 frames sent, 0 failed.
+- Confirmed BleManager serialized queue works.
+- Confirmed colour / brightness order works.
+- Confirmed session logs work.
+- Rewrote `00`–`06` for the package structure.
+- Listed remaining gaps: hidden-feature lab, camera ROI picker, exposure lock, 150-LED preview, profile import/export, About dialog, version reconciliation.
 
 ---
 
-## Next step after this pack
+## Next step
 
-1. Replace `00_` through `06_` with the updated content.
-2. Replace `main.py` completely with v0.41 queued version.
-3. Run:
-   ```powershell
-   python -m py_compile .\main.py
-   ```
-4. Then run corrected `hardware_test.py` again if needed.
-5. Then add camera calibration and hidden-feature lab.
+Build the **hidden-feature laboratory** in `aymashtain/ui/tabs/lab_tab.py`.
+
+Then:
+
+1. Camera ROI visual calibration.
+2. Camera exposure / white balance lock.
+3. 150-LED horizontal preview.
+4. About dialog with credits.
+5. Profile import / export.
+6. Version reconciliation to `v0.51 Alpha`.
 
 ---
 
 ## Important note
 
-This file should be updated after every future AI session.  
-Add a new section with:
+Update this file after every AI session. Add:
 
 - Date
 - AI name
 - What was asked
-- What was changed
-- What files were replaced
+- What changed
+- Files replaced
 - What still needs testing

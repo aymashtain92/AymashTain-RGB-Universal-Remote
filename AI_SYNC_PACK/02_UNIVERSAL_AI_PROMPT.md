@@ -11,7 +11,7 @@ Copy everything below this line and give it to any AI together with:
 
 ## PROMPT START
 
-You are updating **AymashTain LED RGB Remote v0.41**.
+You are updating **AymashTain LED RGB Remote v0.51 Alpha**.
 
 Read these files first:
 
@@ -23,125 +23,99 @@ Read these files first:
 - `05_DEVELOPER_README.md`
 - `06_CURRENT_CHAT.md`
 
-Project facts you must obey:
+Project facts:
 
-1. The user has 3 BLE LED strips:
+1. Project folder: `D:\Coding projects\aymashtain-led-remote-Source`
+2. This is a **package** project, not a single `main.py`.
+   Real code is in `aymashtain/`.
+   Entry point: `main.py` → `aymashtain.app:main`.
+3. Python is **3.14.7** on Windows 10.
+4. Bleak is **3.0.2**.
+5. NumPy is **2.5.3**.
+6. OpenCV is **5.0.0.93**.
+7. Three strips:
    - `41:42:59:F1:C8:68`
    - `41:42:43:E7:8B:F6`
    - `41:42:F9:D7:45:B0`
-2. They advertise as `GATT--DEMO`.
-3. Write characteristic is `0000fff3-0000-1000-8000-00805f9b34fb`.
-4. Service is `00002022-0000-1000-8000-00805f9b34fb`.
-5. Python is **3.14.7** on Windows 10.
-6. Bleak is **3.0.2**.
-7. NumPy is **2.5.3**.
-8. OpenCV is **5.0.0.93**.
-9. Project folder is `D:\AymashTain LED Remote`.
-10. Backup is in `D:\AymashTain LED Remote\Safe copy (do not include in software run)`.
-11. The app must stay free. No ads. No telemetry.
+8. They advertise as `GATT--DEMO`.
+9. Write characteristic: `0000fff3-0000-1000-8000-00805f9b34fb`.
+10. Service: `00002022-0000-1000-8000-00805f9b34fb`.
+11. App must stay free. No ads. No telemetry.
 
 Protocol rules:
 
-- Color command:
-  `BC 04 06 HH HH SS SS 00 00 55`
-- Brightness command:
-  `BC 05 06 BB BB 00 00 00 00 55`
-- Power:
-  `BC01010155` ON, `BC01010055` OFF
-- Captured static:
-  `BC04010055`
-- Captured Scroll setup:
-  `BC0F010155`, `BC11010455`
-- Captured Scroll data frames are in `mrstar_protocol.py`.
-- Classic Magic Home:
-  `CC2333`, `CC2433`, `56RRGGBB00F0AA`
-- Experimental 7E commands must stay in a lab only.
+- Colour: `BC 04 06 HH HH SS SS 00 00 55`
+- Brightness (separate): `BC 05 06 BB BB 00 00 00 00 55`
+- Power: `BC01010155` ON, `BC01010055` OFF
+- Captured static: `BC04010055`
+- Captured Scroll lives in `aymashtain/protocol/mrstar.py`
+- Classic Magic Home: `CC2333`, `CC2433`, `56RRGGBB00F0AA`
 
 Never do these:
 
 - Never mix MR Star BC commands with Classic 56/CC commands.
-- Never put brightness inside the color command.
+- Never put brightness inside the colour frame.
 - Never use `FFFF` as a white field.
-- Never use `asyncio.create_task()` for color and brightness separately.
-- Never send color and brightness in parallel.
-- Always send color first, then brightness, with a small gap.
-- Always serialize BLE writes through one queue.
-- Never use hardcoded handles 13 or 19. Use UUID.
+- Never remove the per-device serialized queue in `aymashtain/ble/manager.py`. It is what keeps colour and brightness in order.
+- Never use `asyncio.create_task()` to fire colour and brightness in parallel.
+- Never use hardcoded handle 13 or 19. Use the FFF3 UUID.
 - Never claim the app can read actual LED state over BLE.
-- Camera is the only physical verification unless readback is discovered.
 - Camera stays local-only. No uploads.
-- Never run Music Sync or Scroll during static color tests.
+- Never run Music Sync or Scroll during static colour tests.
 - Never auto-elevate to administrator.
 - Never overwrite previous logs.
-- Never provide partial patches unless the user explicitly asks for a small edit.
-- Always provide a complete replacement file when replacing a file.
+- Never provide partial patches unless the user explicitly asks.
+- Always give a complete replacement file when replacing a file.
 - Always run `python -m py_compile .\file.py` after replacement.
+- Do not use `py -3.12`. Use `python`.
 
-Important current status:
+Current status:
 
-- `mrstar_protocol.py` is already corrected and verified.
-- `hardware_test.py` is already corrected, compiled, and run.
-- Hardware test passed at BLE transport level.
-- `main.py` is still the old unsafe version.
-- `main.py` still contains overlapping `asyncio.create_task()` calls.
-- Latest event log shows overlapping Music Sync and two Scroll macros starting at the same time.
-- Camera is still disabled: `CAMERA_ENABLED = False`.
-- Hidden-feature lab is not built yet.
-- Global serialized BLE queue is not built in `main.py` yet.
-- Auto-save session log on close is not built in `main.py` yet.
+- App runs. 3/3 strips connect. 54 frames sent, 0 failed.
+- `BleManager` queue works.
+- Colour/brightness order works.
+- Session logger works.
+- **Not built yet:** hidden-feature laboratory, camera ROI visual calibration, exposure lock, 150-LED preview, profile import/export, About dialog with credits.
+- Version: release is `v0.51 Alpha`; code currently says `1.0.0`. Keep them consistent.
 
 User style:
 
 - The user is not a developer.
 - Give one point at a time.
-- Use visual, simple, step-by-step instructions.
-- Do not dump many instructions back to back.
-- If you need the user to edit code, show exactly what to replace and where.
+- Visual, simple, step-by-step.
 - Prefer full file replacement over manual edits.
+- Never ask the user to merge fragments by hand.
 
-Current priority order:
+Priority order:
 
-1. Replace `main.py` completely with v0.41 queued version.
-2. Add global serialized BLE command queue.
-3. Add ordered color → brightness sending.
-4. Add automatic session log saving on close.
-5. Add unified BLE/audio/camera/error log.
-6. Run corrected `hardware_test.py` again if needed.
-7. Add camera calibration and ROI.
-8. Add hidden-feature laboratory.
-9. Fix Music Sync.
-10. Package later.
+1. Hidden-feature laboratory in `aymashtain/ui/tabs/lab_tab.py`.
+2. Camera ROI visual calibration in `aymashtain/ui/tabs/camera_tab.py`.
+3. Camera exposure / white balance lock.
+4. 150-LED horizontal preview in `aymashtain/ui/widgets/strip_preview.py`.
+5. About dialog with credits.
+6. Profile import / export.
+7. Final packaging.
 
 When asked to update a file:
 
 - Read the current file fully.
-- Apply the requested changes.
+- Apply the changes.
 - Return the **full file** in one code block.
-- Include a short compile command after the file.
-- Do not ask the user to manually merge fragments.
+- After the file, give the compile command:
+  `python -m py_compile .\path\to\file.py`
 
 When asked to debug:
 
 - Ask for the exact error text.
-- Ask for the relevant log file.
-- Check `logs/` and `crash.log`.
-- Do not guess if the log is available.
+- Ask for the relevant log file from `%LOCALAPPDATA%\AymashTain\logs\`.
+- Do not guess.
 
 When asked to add a feature:
 
-- Keep it compatible with the existing DB and remote profiles.
+- Keep it inside the `aymashtain/` package.
+- Do not add new top-level scripts.
+- Keep the existing SQLite schema compatible.
 - Do not break Scroll.
-- Do not break Classic compatibility.
 - Keep experimental commands separate.
-
-When asked to test:
-
-- Use one strip first.
-- Then all three.
-- Use two-second holds.
-- Save logs to `logs/`.
-- Do not finish with OFF unless the user asks.
-
-If the user says “add this to the bottom of a specific file”, append the relevant update note at the bottom of that file as a comment or markdown section, depending on file type.
 
 ## PROMPT END

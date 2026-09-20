@@ -8,7 +8,7 @@ Follow these steps exactly. Don’t skip.
 ## What you need
 
 - The folder `AI_SYNC_PACK` with files `00` to `07`.
-- The file you want the AI to change (for example `main.py`).
+- The file you want the AI to change (for example `aymashtain/ui/tabs/lab_tab.py`).
 - The prompt from `02_UNIVERSAL_AI_PROMPT.md`.
 
 ---
@@ -20,7 +20,7 @@ Follow these steps exactly. Don’t skip.
 3. **Upload the file you want changed** (e.g. `main.py`).
 4. **Copy the prompt** from `02_UNIVERSAL_AI_PROMPT.md` and paste it into the chat.
 5. **Tell the AI exactly what to do.**  
-   Example: “Replace `main.py` with the v0.41 queued version. Send the full file.”
+   Example: “Add the hidden-feature laboratory to `aymashtain/ui/tabs/lab_tab.py`. Send the full file.”
 6. **Wait for the AI to give you a full new file.**
 7. **Replace the old file on your PC:**
    - Open the old file in Notepad.
@@ -60,7 +60,7 @@ A: Say: “Send the FULL file. Do not send pieces.”
 A: Copy the whole red error and paste it to the AI. Ask: “Fix this error and send the full file.”
 
 **Q: The file is not found when I run the command.**  
-A: Make sure you are in the right folder. Run `cd "D:\AymashTain LED Remote"` first.
+A: Make sure you are in the right folder. Run `cd "D:\Coding projects\aymashtain-led-remote-Source"` first.
 
 **Q: The app does not open.**  
 A: Open PowerShell, go to the project folder, and run `python .\main.py`. You will see the real error. Copy it to the AI.
