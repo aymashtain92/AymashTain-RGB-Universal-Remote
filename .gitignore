@@ -1,0 +1,29 @@
+# Python / Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+build/
+dist/
+*.egg-info/
+
+# Local databases & user data
+*.db
+*.sqlite3
+
+# Session logs & test exports
+session_*.log
+session_*.json
+session_*.csv
+visible_events_*.txt
+
+# Compressed archives & installers
+*.rar
+*.zip
+
+# OS / IDE specific
+.vscode/
+.idea/
+Thumbs.db
+Desktop.ini
