@@ -1,23 +1,10 @@
-name: Refresh AI context
+name: Disabled
+
 on:
-  push:
-    branches: [main, master]
-    paths-ignore:
-      - 'AI_CONTEXT.md'
-permissions:
-  contents: write
+  workflow_dispatch:
+
 jobs:
-  refresh:
+  noop:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-        with: { fetch-depth: 0 }
-      - uses: actions/setup-python@v5
-        with: { python-version: '3.11' }
-      - run: python ai_sync.py
-      - run: |
-          git config user.name  "ai-sync-bot"
-          git config user.email "ai-sync-bot@users.noreply.github.com"
-          git add AI_CONTEXT.md AI_NOTES.md
-          git diff --cached --quiet || git commit -m "chore: refresh AI context [skip ci]"
-          git push
+      - run: echo "AI context action disabled."
