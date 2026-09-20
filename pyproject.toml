@@ -1,0 +1,35 @@
+[project]
+name = "aymashtain-led-remote"
+version = "1.0.0"
+description = "Desktop controller for MR Star / Magic Home BLE RGB LED strips"
+requires-python = ">=3.10"
+dependencies = [
+    "PySide6>=6.6,<7",
+    "qasync>=0.27",
+    "bleak>=0.22",
+    "numpy>=1.26",
+    "sounddevice>=0.4.6",
+    "soundfile>=0.12",
+    "opencv-python>=4.9",
+]
+
+[project.scripts]
+aymashtain = "aymashtain.app:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["aymashtain*"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "C4"]
+ignore = ["B008", "E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
