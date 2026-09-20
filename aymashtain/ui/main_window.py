@@ -2,9 +2,21 @@
 
 from __future__ import annotations
 
-from PySide6.QtCore import QByteArray, Qt, QTimer
-from PySide6.QtGui import QAction, QIcon
-from PySide6.QtWidgets import QLabel, QMainWindow, QMessageBox, QTabWidget, QWidget
+import asyncio
+import time
+
+from PySide6.QtCore import QByteArray, QEventLoop, Qt, QTimer
+from PySide6.QtGui import QAction, QIcon, QKeySequence
+from PySide6.QtWidgets import (
+    QAbstractItemView,
+    QApplication,
+    QLabel,
+    QMainWindow,
+    QMessageBox,
+    QTableWidget,
+    QTabWidget,
+    QWidget,
+)
 
 from .. import APP_NAME, APP_VERSION, paths
 from ..protocol import CMD_OFF, CMD_ON
@@ -31,6 +43,7 @@ Effect <code>BC 06 02 XX 0000 55</code></p>
 <p>Colour and brightness are sent as separate frames on purpose — merging them
 is what makes colours look pale or white-tinted.</p>
 <p>Data folder: <code>{paths.data_dir()}</code></p>
+<p>Credits: see <code>CREDITS.md</code> in the repository root.</p>
 """
 
 
@@ -54,7 +67,7 @@ class MainWindow(QMainWindow):
         self.tab_sweep = SweepTab(ctx, camera_tab=self.tab_camera)
         self.tab_music = MusicTab(ctx)
         self.tab_console = ConsoleTab(ctx)
-        self.tab_lab = LabTab(ctx, remote_tab=self.tab_remote)
+        self.tab_lab = LabTab(ctx, remote_tab=self.tab_remote, camera_tab=self.tab_camera)
         self.tab_events = EventsTab(ctx)
 
         for widget, title in (
@@ -68,6 +81,12 @@ class MainWindow(QMainWindow):
             (self.tab_events, "Events"),
         ):
             self.tabs.addTab(widget, title)
+
+        for table in self.findChildren(QTableWidget):
+            table.setAlternatingRowColors(True)
+            table.setEditTriggers(QAbstractItemView.NoEditTriggers)
+            table.verticalHeader().setVisible(False)
+            table.verticalHeader().setDefaultSectionSize(26)
 
         self._build_menu()
 
@@ -97,6 +116,7 @@ class MainWindow(QMainWindow):
         file_menu.addAction(action_folder)
         file_menu.addSeparator()
         action_quit = QAction("Quit", self)
+        action_quit.setShortcuts([QKeySequence("Ctrl+Q"), QKeySequence("Alt+F4")])
         action_quit.triggered.connect(self.close)
         file_menu.addAction(action_quit)
 
@@ -110,6 +130,11 @@ class MainWindow(QMainWindow):
         action_reconnect = QAction("Connect all known strips", self)
         action_reconnect.triggered.connect(self.tab_connect._connect_all)
         control_menu.addAction(action_reconnect)
+        control_menu.addSeparator()
+        action_panic = QAction("Stop all activity", self)
+        action_panic.setShortcuts([QKeySequence("Esc"), QKeySequence("Ctrl+.")])
+        action_panic.triggered.connect(self.stop_all_activity)
+        control_menu.addAction(action_panic)
 
         view_menu = self.menuBar().addMenu("&View")
         action_theme = QAction("Toggle light / dark", self)
@@ -117,11 +142,20 @@ class MainWindow(QMainWindow):
         view_menu.addAction(action_theme)
 
         help_menu = self.menuBar().addMenu("&Help")
-        action_about = QAction("Protocol && about", self)
+        action_about = QAction("About", self)
         action_about.triggered.connect(
             lambda: QMessageBox.about(self, f"About {APP_NAME}", ABOUT)
         )
         help_menu.addAction(action_about)
+
+    def stop_all_activity(self) -> None:
+        self.tab_sweep._stop()
+        self.tab_console._stop()
+        self.tab_music._stop_reacting()
+        if hasattr(self.tab_lab, "_lab_stop"):
+            self.tab_lab._lab_stop()
+        self.ctx.log("info", "Stopped all running activity")
+        self.statusBar().showMessage("Stopped all running activity", 4000)
 
     def _toggle_theme(self) -> None:
         self.ctx.settings.dark_theme = not self.ctx.settings.dark_theme
@@ -147,6 +181,7 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, event) -> None:  # noqa: N802 - Qt naming
         self._heartbeat.stop()
+        self.stop_all_activity()
         for tab in (self.tab_camera, self.tab_music):
             shutdown = getattr(tab, "shutdown", None)
             if shutdown is not None:
@@ -158,9 +193,22 @@ class MainWindow(QMainWindow):
         if self.ctx.bus.session_logger is not None:
             self.ctx.bus.session_logger.flush_json()
 
-        self.ctx.run(self.ctx.ble.disconnect_all())
+        self._disconnect_with_timeout(2.0)
         self.ctx.db.close()
         super().closeEvent(event)
+        QApplication.quit()
+
+    def _disconnect_with_timeout(self, seconds: float) -> None:
+        try:
+            loop = asyncio.get_event_loop()
+            task = loop.create_task(self.ctx.ble.disconnect_all())
+        except RuntimeError:
+            return
+        deadline = time.monotonic() + seconds
+        while not task.done() and time.monotonic() < deadline:
+            QApplication.processEvents(QEventLoop.AllEvents, 50)
+        if not task.done():
+            task.cancel()
 
 
 def center_placeholder(text: str) -> QWidget:

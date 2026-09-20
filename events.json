@@ -1,0 +1,632 @@
+[
+  {
+    "timestamp": "2026-09-21 00:58:10.241",
+    "kind": "info",
+    "source": "ui",
+    "message": "AymashTain LED RGB Remote 1.0.0 started"
+  },
+  {
+    "timestamp": "2026-09-21 00:58:18.045",
+    "kind": "ble",
+    "source": "ble",
+    "message": "Connecting to GATT--DEMO (41:42:F9:D7:45:B0)\u2026"
+  },
+  {
+    "timestamp": "2026-09-21 00:58:18.465",
+    "kind": "ble",
+    "source": "ble",
+    "message": "Connecting to GATT--DEMO (41:42:59:F1:C8:68)\u2026"
+  },
+  {
+    "timestamp": "2026-09-21 00:58:18.467",
+    "kind": "ble",
+    "source": "ble",
+    "message": "Connecting to GATT--DEMO (41:42:43:E7:8B:F6)\u2026"
+  },
+  {
+    "timestamp": "2026-09-21 00:58:22.855",
+    "kind": "ble",
+    "source": "ble",
+    "message": "Connected GATT--DEMO \u2192 write char 0000fff3-0000-1000-8000-00805f9b34fb"
+  },
+  {
+    "timestamp": "2026-09-21 00:58:23.546",
+    "kind": "ble",
+    "source": "ble",
+    "message": "Connected GATT--DEMO \u2192 write char 0000fff3-0000-1000-8000-00805f9b34fb"
+  },
+  {
+    "timestamp": "2026-09-21 00:58:24.670",
+    "kind": "ble",
+    "source": "ble",
+    "message": "Connected GATT--DEMO \u2192 write char 0000fff3-0000-1000-8000-00805f9b34fb"
+  },
+  {
+    "timestamp": "2026-09-21 00:58:33.587",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC040600B403E8000055 (color)"
+  },
+  {
+    "timestamp": "2026-09-21 00:58:33.588",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC040600B403E8000055 (color)"
+  },
+  {
+    "timestamp": "2026-09-21 00:58:33.588",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC040600B403E8000055 (color)"
+  },
+  {
+    "timestamp": "2026-09-21 00:58:33.592",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC050604000000000055 (brightness)"
+  },
+  {
+    "timestamp": "2026-09-21 00:58:33.594",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC050604000000000055 (brightness)"
+  },
+  {
+    "timestamp": "2026-09-21 00:58:33.594",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC050604000000000055 (brightness)"
+  },
+  {
+    "timestamp": "2026-09-21 00:58:33.848",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC0406000003E8000055 (color)"
+  },
+  {
+    "timestamp": "2026-09-21 00:58:33.849",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC0406000003E8000055 (color)"
+  },
+  {
+    "timestamp": "2026-09-21 00:58:33.849",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC0406000003E8000055 (color)"
+  },
+  {
+    "timestamp": "2026-09-21 00:58:33.852",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC050604000000000055 (brightness)"
+  },
+  {
+    "timestamp": "2026-09-21 00:58:33.853",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC050604000000000055 (brightness)"
+  },
+  {
+    "timestamp": "2026-09-21 00:58:33.854",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC050604000000000055 (brightness)"
+  },
+  {
+    "timestamp": "2026-09-21 00:58:34.093",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC040600B403E8000055 (color)"
+  },
+  {
+    "timestamp": "2026-09-21 00:58:34.095",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC050604000000000055 (brightness)"
+  },
+  {
+    "timestamp": "2026-09-21 00:58:34.108",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC040600B403E8000055 (color)"
+  },
+  {
+    "timestamp": "2026-09-21 00:58:34.109",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC040600B403E8000055 (color)"
+  },
+  {
+    "timestamp": "2026-09-21 00:58:34.111",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC050604000000000055 (brightness)"
+  },
+  {
+    "timestamp": "2026-09-21 00:58:34.112",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC050604000000000055 (brightness)"
+  },
+  {
+    "timestamp": "2026-09-21 00:58:41.743",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC0406000003E8000055 (color)"
+  },
+  {
+    "timestamp": "2026-09-21 00:58:41.746",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC050604000000000055 (brightness)"
+  },
+  {
+    "timestamp": "2026-09-21 00:58:41.811",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC0406000003E8000055 (color)"
+  },
+  {
+    "timestamp": "2026-09-21 00:58:41.814",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC050604000000000055 (brightness)"
+  },
+  {
+    "timestamp": "2026-09-21 00:58:41.873",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC0406000003E8000055 (color)"
+  },
+  {
+    "timestamp": "2026-09-21 00:58:41.876",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC050604000000000055 (brightness)"
+  },
+  {
+    "timestamp": "2026-09-21 00:58:43.476",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC040600F003E8000055 (color)"
+  },
+  {
+    "timestamp": "2026-09-21 00:58:43.479",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC050604000000000055 (brightness)"
+  },
+  {
+    "timestamp": "2026-09-21 00:58:43.560",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC040600F003E8000055 (color)"
+  },
+  {
+    "timestamp": "2026-09-21 00:58:43.564",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC050604000000000055 (brightness)"
+  },
+  {
+    "timestamp": "2026-09-21 00:58:43.633",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC040600F003E8000055 (color)"
+  },
+  {
+    "timestamp": "2026-09-21 00:58:43.636",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC050604000000000055 (brightness)"
+  },
+  {
+    "timestamp": "2026-09-21 00:58:45.289",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC0406001A03E8000055 (color)"
+  },
+  {
+    "timestamp": "2026-09-21 00:58:45.292",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC050604000000000055 (brightness)"
+  },
+  {
+    "timestamp": "2026-09-21 00:58:45.365",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC0406001A03E8000055 (color)"
+  },
+  {
+    "timestamp": "2026-09-21 00:58:45.368",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC050604000000000055 (brightness)"
+  },
+  {
+    "timestamp": "2026-09-21 00:58:45.426",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC0406001A03E8000055 (color)"
+  },
+  {
+    "timestamp": "2026-09-21 00:58:45.428",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC050604000000000055 (brightness)"
+  },
+  {
+    "timestamp": "2026-09-21 01:01:45.309",
+    "kind": "camera",
+    "source": "ui",
+    "message": "Preview started on camera 0"
+  },
+  {
+    "timestamp": "2026-09-21 01:07:55.215",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC0406000003E8000055 (sweep:hue)"
+  },
+  {
+    "timestamp": "2026-09-21 01:07:55.279",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC0406000003E8000055 (sweep:hue)"
+  },
+  {
+    "timestamp": "2026-09-21 01:07:55.350",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC0406000003E8000055 (sweep:hue)"
+  },
+  {
+    "timestamp": "2026-09-21 01:07:55.622",
+    "kind": "camera",
+    "source": "ui",
+    "message": "hue=0\u00b0 \u2192 rgb(246, 147, 150) hue 358\u00b0 white 60%"
+  },
+  {
+    "timestamp": "2026-09-21 01:07:55.626",
+    "kind": "sweep",
+    "source": "ui",
+    "message": "[1/12] BC0406000003E8000055 \u2192 3 device(s)"
+  },
+  {
+    "timestamp": "2026-09-21 01:07:56.030",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC0406001E03E8000055 (sweep:hue)"
+  },
+  {
+    "timestamp": "2026-09-21 01:07:56.105",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC0406001E03E8000055 (sweep:hue)"
+  },
+  {
+    "timestamp": "2026-09-21 01:07:56.170",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC0406001E03E8000055 (sweep:hue)"
+  },
+  {
+    "timestamp": "2026-09-21 01:07:56.388",
+    "kind": "camera",
+    "source": "ui",
+    "message": "hue=30\u00b0 \u2192 rgb(227, 224, 222) hue 23\u00b0 white 98%"
+  },
+  {
+    "timestamp": "2026-09-21 01:07:56.391",
+    "kind": "sweep",
+    "source": "ui",
+    "message": "[2/12] BC0406001E03E8000055 \u2192 3 device(s)"
+  },
+  {
+    "timestamp": "2026-09-21 01:07:56.806",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC0406003C03E8000055 (sweep:hue)"
+  },
+  {
+    "timestamp": "2026-09-21 01:07:56.864",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC0406003C03E8000055 (sweep:hue)"
+  },
+  {
+    "timestamp": "2026-09-21 01:07:56.920",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC0406003C03E8000055 (sweep:hue)"
+  },
+  {
+    "timestamp": "2026-09-21 01:07:57.155",
+    "kind": "camera",
+    "source": "ui",
+    "message": "hue=60\u00b0 \u2192 rgb(232, 247, 239) hue 146\u00b0 white 94%"
+  },
+  {
+    "timestamp": "2026-09-21 01:07:57.160",
+    "kind": "sweep",
+    "source": "ui",
+    "message": "[3/12] BC0406003C03E8000055 \u2192 3 device(s)"
+  },
+  {
+    "timestamp": "2026-09-21 01:07:57.571",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC0406005A03E8000055 (sweep:hue)"
+  },
+  {
+    "timestamp": "2026-09-21 01:07:57.631",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC0406005A03E8000055 (sweep:hue)"
+  },
+  {
+    "timestamp": "2026-09-21 01:07:57.698",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC0406005A03E8000055 (sweep:hue)"
+  },
+  {
+    "timestamp": "2026-09-21 01:07:57.897",
+    "kind": "camera",
+    "source": "ui",
+    "message": "hue=90\u00b0 \u2192 rgb(233, 248, 238) hue 139\u00b0 white 94%"
+  },
+  {
+    "timestamp": "2026-09-21 01:07:57.902",
+    "kind": "sweep",
+    "source": "ui",
+    "message": "[4/12] BC0406005A03E8000055 \u2192 3 device(s)"
+  },
+  {
+    "timestamp": "2026-09-21 01:07:58.313",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC0406007803E8000055 (sweep:hue)"
+  },
+  {
+    "timestamp": "2026-09-21 01:07:58.375",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC0406007803E8000055 (sweep:hue)"
+  },
+  {
+    "timestamp": "2026-09-21 01:07:58.443",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC0406007803E8000055 (sweep:hue)"
+  },
+  {
+    "timestamp": "2026-09-21 01:07:58.691",
+    "kind": "camera",
+    "source": "ui",
+    "message": "hue=120\u00b0 \u2192 rgb(210, 255, 221) hue 134\u00b0 white 83%"
+  },
+  {
+    "timestamp": "2026-09-21 01:07:58.697",
+    "kind": "sweep",
+    "source": "ui",
+    "message": "[5/12] BC0406007803E8000055 \u2192 3 device(s)"
+  },
+  {
+    "timestamp": "2026-09-21 01:07:59.109",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC0406009603E8000055 (sweep:hue)"
+  },
+  {
+    "timestamp": "2026-09-21 01:07:59.170",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC0406009603E8000055 (sweep:hue)"
+  },
+  {
+    "timestamp": "2026-09-21 01:07:59.248",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC0406009603E8000055 (sweep:hue)"
+  },
+  {
+    "timestamp": "2026-09-21 01:07:59.460",
+    "kind": "camera",
+    "source": "ui",
+    "message": "hue=150\u00b0 \u2192 rgb(205, 254, 237) hue 159\u00b0 white 81%"
+  },
+  {
+    "timestamp": "2026-09-21 01:07:59.466",
+    "kind": "sweep",
+    "source": "ui",
+    "message": "[6/12] BC0406009603E8000055 \u2192 3 device(s)"
+  },
+  {
+    "timestamp": "2026-09-21 01:07:59.873",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC040600B403E8000055 (sweep:hue)"
+  },
+  {
+    "timestamp": "2026-09-21 01:07:59.943",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC040600B403E8000055 (sweep:hue)"
+  },
+  {
+    "timestamp": "2026-09-21 01:07:59.999",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC040600B403E8000055 (sweep:hue)"
+  },
+  {
+    "timestamp": "2026-09-21 01:08:00.292",
+    "kind": "camera",
+    "source": "ui",
+    "message": "hue=180\u00b0 \u2192 rgb(200, 252, 253) hue 181\u00b0 white 79%"
+  },
+  {
+    "timestamp": "2026-09-21 01:08:00.299",
+    "kind": "sweep",
+    "source": "ui",
+    "message": "[7/12] BC040600B403E8000055 \u2192 3 device(s)"
+  },
+  {
+    "timestamp": "2026-09-21 01:08:00.708",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC040600D203E8000055 (sweep:hue)"
+  },
+  {
+    "timestamp": "2026-09-21 01:08:00.769",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC040600D203E8000055 (sweep:hue)"
+  },
+  {
+    "timestamp": "2026-09-21 01:08:00.838",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC040600D203E8000055 (sweep:hue)"
+  },
+  {
+    "timestamp": "2026-09-21 01:08:01.059",
+    "kind": "camera",
+    "source": "ui",
+    "message": "hue=210\u00b0 \u2192 rgb(177, 239, 255) hue 192\u00b0 white 69%"
+  },
+  {
+    "timestamp": "2026-09-21 01:08:01.067",
+    "kind": "sweep",
+    "source": "ui",
+    "message": "[8/12] BC040600D203E8000055 \u2192 3 device(s)"
+  },
+  {
+    "timestamp": "2026-09-21 01:08:01.466",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC040600F003E8000055 (sweep:hue)"
+  },
+  {
+    "timestamp": "2026-09-21 01:08:01.540",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC040600F003E8000055 (sweep:hue)"
+  },
+  {
+    "timestamp": "2026-09-21 01:08:01.599",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC040600F003E8000055 (sweep:hue)"
+  },
+  {
+    "timestamp": "2026-09-21 01:08:01.867",
+    "kind": "camera",
+    "source": "ui",
+    "message": "hue=240\u00b0 \u2192 rgb(135, 189, 253) hue 212\u00b0 white 53%"
+  },
+  {
+    "timestamp": "2026-09-21 01:08:01.875",
+    "kind": "sweep",
+    "source": "ui",
+    "message": "[9/12] BC040600F003E8000055 \u2192 3 device(s)"
+  },
+  {
+    "timestamp": "2026-09-21 01:08:02.288",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC0406010E03E8000055 (sweep:hue)"
+  },
+  {
+    "timestamp": "2026-09-21 01:08:02.347",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC0406010E03E8000055 (sweep:hue)"
+  },
+  {
+    "timestamp": "2026-09-21 01:08:02.409",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC0406010E03E8000055 (sweep:hue)"
+  },
+  {
+    "timestamp": "2026-09-21 01:08:02.724",
+    "kind": "camera",
+    "source": "ui",
+    "message": "hue=270\u00b0 \u2192 rgb(201, 174, 254) hue 260\u00b0 white 68%"
+  },
+  {
+    "timestamp": "2026-09-21 01:08:02.733",
+    "kind": "sweep",
+    "source": "ui",
+    "message": "[10/12] BC0406010E03E8000055 \u2192 3 device(s)"
+  },
+  {
+    "timestamp": "2026-09-21 01:08:03.140",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC0406012C03E8000055 (sweep:hue)"
+  },
+  {
+    "timestamp": "2026-09-21 01:08:03.210",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC0406012C03E8000055 (sweep:hue)"
+  },
+  {
+    "timestamp": "2026-09-21 01:08:03.279",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC0406012C03E8000055 (sweep:hue)"
+  },
+  {
+    "timestamp": "2026-09-21 01:08:03.492",
+    "kind": "camera",
+    "source": "ui",
+    "message": "hue=300\u00b0 \u2192 rgb(206, 171, 254) hue 265\u00b0 white 68%"
+  },
+  {
+    "timestamp": "2026-09-21 01:08:03.501",
+    "kind": "sweep",
+    "source": "ui",
+    "message": "[11/12] BC0406012C03E8000055 \u2192 3 device(s)"
+  },
+  {
+    "timestamp": "2026-09-21 01:08:03.910",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC0406014A03E8000055 (sweep:hue)"
+  },
+  {
+    "timestamp": "2026-09-21 01:08:03.977",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC0406014A03E8000055 (sweep:hue)"
+  },
+  {
+    "timestamp": "2026-09-21 01:08:04.029",
+    "kind": "send",
+    "source": "ble",
+    "message": "GATT--DEMO \u2190 BC0406014A03E8000055 (sweep:hue)"
+  },
+  {
+    "timestamp": "2026-09-21 01:08:04.226",
+    "kind": "camera",
+    "source": "ui",
+    "message": "hue=330\u00b0 \u2192 rgb(224, 161, 253) hue 282\u00b0 white 64%"
+  },
+  {
+    "timestamp": "2026-09-21 01:08:04.237",
+    "kind": "sweep",
+    "source": "ui",
+    "message": "[12/12] BC0406014A03E8000055 \u2192 3 device(s)"
+  },
+  {
+    "timestamp": "2026-09-21 01:09:16.952",
+    "kind": "info",
+    "source": "ui",
+    "message": "Exported 104 events to D:/Coding projects/aymashtain-led-remote-Source/events.csv"
+  }
+]
