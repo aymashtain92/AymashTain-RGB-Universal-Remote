@@ -1,0 +1,811 @@
+
+Gemini
+New chat
+Search chats
+Images
+Library
+New notebook
+Best Free AI Coding Assistant
+سيناريو حلقة فضاء بأسلوب الدحيح
+Fixing USB Microphone Noise
+Train Meeting Time and Distance
+Integrating an AI API into GUI
+ملخص العقد وشروط الاستخدام الهامة
+Rice Stove Reminder Time
+Rice Cooking Timer Reminder
+Salting Rice Measurement Guide
+Best Universal Remote Apps
+Cloning IR Remotes with Smartphones
+Equation Cutout Sheet Generation
+Fixing MR Star LED Lag
+Stove Reminder for Chicken
+Automated Daily Searches Unavailable
+ONIKUMA M830 Amazon Review Analysis
+Organizing Books by Dewey Decimal
+Understanding Wireless Keyboard Connections
+MR.STAR App Shortcut Discussion
+Light Travel Time to Moon
+KSP Mod Optimization and Wings
+Fix Missing Parallax Foliage in KSP
+Inaccessible Claude Link Catch-Up Request
+Resolving CKAN Mod Installation Conflicts
+Space Survival and Engineering Films
+سيناريو مطاردة أمجد السينمائية
+Space Shuttle 3D Paper Model
+تصميم خط إنتاج حلويات متكامل
+فكرة مكنة صنع الجلاش
+درجات صنفرة الحوائط والخشب
+Rocket Nozzle Propellant Vaporization
+OPM Grand Tour Delta-V Budget
+reFX Account Verification Email Safety
+Conversation with Gemini
+no please try again
+
+I encountered a system error and lost the context of your original request.
+
+Could you please repeat what you would like me to try again? We can pick up exactly where we left off.
+
+fix all erros in the program and give me a clean version 0.51
+
+Please share or paste the code or script you'd like me to fix, along with any specific error messages you're seeing. Once provided, I'll resolve the issues and generate a clean version 0.51 for you.
+
+which to use?
+
+None of these if you are publishing a standard Python desktop application or .exe.
+
+The options shown on this page are package registries for specific programming ecosystems:
+
+Apache Maven: Java
+
+NuGet: C# / .NET
+
+RubyGems: Ruby
+
+npm: JavaScript / Node.js
+
+Containers: Docker images / OCI containers
+
+What to use instead
+For releasing a Python app or Windows EXE (Recommended):
+Don't use GitHub Packages. Go to your repository's main Code tab, click Releases on the right sidebar, and click Draft a new release. You can attach your compiled .exe, .zip, or source code files directly.
+
+If you are containerizing your app with Docker:
+Select Containers.
+
+https://github.com/aymashtain92/AymashTain-RGB-Universal-Remote
+
+am I missing anything!
+
+To make your repository clean, professional, and ready for public sharing, here is what you need to add or configure:
+
+1. Add a .gitignore file (Critical)
+Without a .gitignore, Git will track temporary logs, database dumps, and archives (like lumenforge.db, session_*.log, .rar files, and __pycache__).
+
+Create a file named .gitignore in your repository root with these contents:
+
+Code snippet
+# Python / Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+build/
+dist/
+*.egg-info/
+
+# Local databases & user data
+*.db
+*.sqlite3
+
+# Session logs & test exports
+session_*.log
+session_*.json
+session_*.csv
+visible_events_*.txt
+
+# Compressed archives & installers
+*.rar
+*.zip
+
+# OS / IDE specific
+.vscode/
+.idea/
+Thumbs.db
+Desktop.ini
+2. Add an Open Source LICENSE file
+Since your README.md states the project is free and open, adding an explicit license file defines how others can legally use or contribute to your code.
+
+MIT License: Recommended if you want max flexibility and low restriction.
+
+GPL-3.0: Recommended if you want any modifications or forks to also remain open-source.
+
+To add one directly on GitHub: click Add file → Create new file → type LICENSE → click Choose a license template on the right.
+
+3. Create a GitHub Release for Version 0.51
+Since you are distributing a desktop application rather than a package library, publish your builds using GitHub Releases:
+
+Navigate to your repository homepage on GitHub.
+
+Click Releases on the right sidebar (or click Create a new release).
+
+Click Draft a new release.
+
+Set Choose a tag: v0.51-alpha (or v0.51).
+
+Target: main.
+
+Title: AymashTain LED RGB Remote v0.51.
+
+Under Attach binaries by dropping them here, upload your .exe installer, standalone .zip, or install_and_repair.ps1.
+
+Click Publish release.
+
+4. Optimize Repository Metadata ("About" Section)
+On the right sidebar of your repository homepage, click the Gear Icon next to About:
+
+Description: Free, open-source Windows desktop app for controlling BLE LED strips and bulbs using the MR Star protocol.
+
+Topics/Tags: python pyside6 ble bluetooth-low-energy led-strip mr-star desktop-app reverse-engineering
+
+then what?
+
+Click the green Commit changes button at the bottom left to save .gitignore directly to your main branch.   
+PNG
+
+1
+Commit .gitignore
+Click Commit changes on the current screen. You can verify it succeeded when you see .gitignore listed in your repository root directory.
+
+2
+Add an Open Source LICENSE
+Go to your repository home page.
+
+Click Add file → Create new file.
+
+Type LICENSE in the filename box.
+
+Click Choose a license template on the right side, select MIT License, and click Review and submit.
+
+Click Commit changes.... Verify that LICENSE appears alongside your code files.
+
+3
+Publish Version 0.51 Release
+Return to the main page of your repository.
+
+Click Releases on the right sidebar.
+
+Click Draft a new release.
+
+Type v0.51 in the Choose a tag field and set the release title to AymashTain LED RGB Remote v0.51.
+
+Drag and drop your compiled .exe installer, .zip archive, or PowerShell setup script into the binaries field.
+
+Click Publish release. Verify by visiting the public Releases tab to ensure the binary download link is active.
+
+nothing to write in the changes comments?
+
+Writing a quick, descriptive commit message is good practice because it helps you keep track of project history later. While leaving the default text works, replacing it with a clear note is better.
+
+Recommended Commit Message
+Commit Title: Add .gitignore to exclude logs, database files, and build artifacts
+
+Extended Description (Optional): Prevents tracking of session logs, SQLite databases, Python bytecode (__pycache__), and build outputs.
+
+Why it helps
+Clear Git History: When viewing your repository commit history, you will instantly know why this commit was created without needing to open the file diff.
+
+Professional standard: Clear commit messages make open-source repositories look well-maintained to collaborators and recruiters.
+
+ok did that now, next?
+
+things you told me earlier and i didn't get to yet
+
+Now that .gitignore is committed, here are the remaining tasks from earlier to get your repository polished and publish version 0.51:
+
+1
+Add an Open Source LICENSE
+1-2 min
+Go to your repository main page.
+
+Click Add file → Create new file.
+
+Type LICENSE in the filename box.
+
+Click Choose a license template on the right side, pick MIT License (or GPL-3.0), and click Review and submit.
+
+Click Commit changes....
+
+2
+Set Up Repository Metadata ("About" section)
+1 min
+Go to your main repository page on GitHub.
+
+Click the Gear Icon next to About on the right sidebar.
+
+Add a short description: Free, open-source Windows desktop app for controlling BLE LED strips and bulbs via MR Star protocol.
+
+Add topic tags: python, pyside6, ble, bluetooth-low-energy, led-strip, mr-star.
+
+Click Save changes.
+
+3
+Publish Version 0.51 Release
+2-3 min
+Click Releases on the right sidebar of your repository page.
+
+Click Draft a new release.
+
+Type v0.51 in the Choose a tag field.
+
+Set the title to AymashTain LED RGB Remote v0.51.
+
+Drag and drop your compiled .exe, .zip, or installer script into the Attach binaries field.
+
+Click Publish release.
+
+Skip to content
+
+
+
+
+
+aymashtain92
+
+AymashTain-RGB-Universal-Remote
+
+
+
+Repository navigation
+
+
+
+
+
+Code
+
+
+
+Issues
+
+
+
+Pull requests
+
+
+
+Agents
+
+
+
+Actions
+
+
+
+Projects
+
+
+
+Wiki
+
+
+
+Security and quality
+
+
+
+Insights
+
+
+
+Settings
+
+
+
+Add a license to your project
+
+Apache License 2.0
+
+GNU General Public License v3.0
+
+MIT License
+
+BSD 2-Clause "Simplified" License
+
+BSD 3-Clause "New" or "Revised" License
+
+Boost Software License 1.0
+
+Creative Commons Zero v1.0 Universal
+
+Eclipse Public License 2.0
+
+GNU Affero General Public License v3.0
+
+GNU General Public License v2.0
+
+GNU Lesser General Public License v2.1
+
+Mozilla Public License 2.0
+
+The Unlicense
+
+To adopt MIT License, enter your details. You’ll have a chance to review before committing a LICENSE file to a new branch or the root of your project.
+
+YearThe current year
+
+
+
+Full nameThe full name or username of the repository owner
+
+
+
+A short and simple permissive license with conditions only requiring preservation of copyright and license notices. Licensed works, modifications, and larger works may be distributed under different terms and without source code.
+
+Permissions
+
+Commercial useThe licensed material and derivatives may be used for commercial purposes.
+
+ModificationThe licensed material may be modified.
+
+DistributionThe licensed material may be distributed.
+
+Private useThe licensed material may be used and modified in private.
+
+Limitations
+
+LiabilityThis license includes a limitation of liability.
+
+WarrantyThis license explicitly states that it does NOT provide any warranty.
+
+Conditions
+
+License and copyright noticeA copy of the license and copyright notice must be included with the licensed material.
+
+This is not legal advice. Learn more about repository licenses.
+
+MIT License
+
+Copyright (c) Year Full name
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+Footer
+
+
+
+© 2026 GitHub, Inc.
+
+Footer navigation
+
+Terms
+
+Privacy
+
+Security
+
+Status
+
+Community
+
+Docs
+
+Contact
+
+Manage cookies
+
+Do not share my personal information
+
+ 
+
+
+
+like that!
+
+Yes, exactly right!
+
+Click the green Review and submit button on the right. On the review page that follows, click Commit changes... to save the LICENSE file directly to your main branch.   
+PNG
+
+1
+Set Up Repository Metadata ("About" Section)
+Go to your main repository page ([github.com/aymashtain92/AymashTain-RGB-Universal-Remote](https://github.com/aymashtain92/AymashTain-RGB-Universal-Remote)).
+
+Look at the right sidebar and click the Gear Icon next to About.
+
+Add a description: Free, open-source Windows desktop app for controlling BLE LED strips and bulbs via MR Star protocol.
+
+Add topics: python, pyside6, ble, bluetooth-low-energy, led-strip, mr-star.
+
+Click Save changes.
+
+2
+Publish Version 0.51 Release
+Click Releases on the right sidebar.
+
+Click Draft a new release.
+
+Set Choose a tag to v0.51 and title it AymashTain LED RGB Remote v0.51.
+
+Drag and drop your compiled .exe, .zip, or installer script into the binary upload section.
+
+Click Publish release.
+
+Two quick adjustments are needed on this screen before saving:
+
+1
+Fix Topics Entry
+Action needed
+In the Topics field, type each tag individually and press Enter (or Space) after each one, rather than separating them with commas. GitHub needs them as separate pills:
+
+python
+
+pyside6
+
+ble
+
+bluetooth-low-energy
+
+led-strip
+
+mr-star
+
+2
+Clean Up Homepage Display
+Recommended
+Under Include in the home page:
+
+Keep Releases checked.
+
+Uncheck Deployments and Packages (since you aren't using GitHub package registries or CI/CD deployments, this removes empty sections from your main repository page).
+
+3
+Save Repository Details
+Final step
+Click the green Save changes button at the bottom right.
+
+Final Step: Publish Version 0.51 Release
+Once saved, publish your release so users can download your executable or script directly:
+
+Click Releases on the right sidebar of your repository homepage (or click Create a new release).
+
+Set Choose a tag to v0.51.
+
+Set Release title to AymashTain LED RGB Remote v0.51.
+
+Drag and drop your compiled executable (.exe), compressed package (.zip), or install_and_repair.ps1 script into the Attach binaries drop area.
+
+Click Publish release.
+
+The topic tags look great.   
+PNG
+
+1
+Clean Up Homepage Display
+Recommended
+Uncheck Deployments and Packages under Include in the home page so those empty sections don't clutter your repository sidebar. Leave Releases checked.
+
+2
+Save Repository Details
+Save
+Click the green Save changes button at the bottom right.
+
+3
+Create Version 0.51 Release
+Final Step
+Click Releases on the right sidebar of your repository homepage (or click Create a new release).
+
+Click Draft a new release.
+
+Type v0.51 in the Choose a tag field.
+
+Set the Release title to AymashTain LED RGB Remote v0.51.
+
+Drag and drop your compiled executable (.exe), .zip folder, or install_and_repair.ps1 script into the binary drop box.
+
+Click Publish release.
+
+Here is how to complete each field on this page:   
+PNG
+
+1
+1. Set the Tag
+Click Tag: Select tag at the top left, type v0.51, and click + Create new tag: v0.51 on publish.
+
+2
+2. Add Release Notes
+Copy and paste the following template directly into the Describe this release box:
+
+Markdown
+## 🚀 What's New in v0.51-alpha
+
+- **MR Star Protocol Fixes:** Decoupled color and brightness commands to eliminate white-tinting / color washing.
+- **BLE Connection Stability:** Improved multi-device scanning, GATT connection resilience, and session event handling via Bleak.
+- **Integrated Diagnostic Tools:** Local webcam visual verification, custom remote controls, multi-frame sequence replay, and automated parameter sweeps.
+- **Cleaner Application Core:** Bug fixes across the PySide6 UI and event loop shutdown process.
+
+### 📄 Installation & Run
+Run `install_and_repair.ps1` or launch via Python using `python main.py`.
+3
+3. Attach Binaries
+Drag and drop your executable (.exe), .zip archive, or install_and_repair.ps1 into the Attach binaries box at the bottom.
+
+4
+4. Mark as Pre-release & Publish
+Under Release label at the bottom, select Pre-release (since it is an alpha version), then click Publish release.
+
+what to add!
+
+To attach the binary files to your GitHub release, you need to compile your .exe first:
+
+1
+1. Run the Build Script
+Double-click build_exe.bat in this folder. A terminal window will open and build your application using PyInstaller.
+
+2
+2. Locate the Built Executable
+When the build finishes, a new folder named dist will appear in this directory. Open dist to find your compiled executable file (.exe).
+
+3
+3. Upload to GitHub Releases
+Drag and drop the following files into the Attach binaries by dropping them here... box on your GitHub release page:
+
+The .exe file from inside the dist folder.
+
+repair.ps1 (so users can easily run setup/repair steps if needed).
+
+this is after build
+
+Open the dist folder. That is where PyInstaller placed your compiled executable.   
+PNG
+
+1
+1. Get Your Binary File
+Inside dist:
+
+If you see a single .exe file (e.g., AymashTain LED Remote.exe), that file is ready to publish.
+
+If you see a folder containing an .exe and other DLL/library files, right-click that folder and select Compress to ZIP file.
+
+2
+2. Upload to GitHub Releases
+Go back to the GitHub Release draft page in your browser:
+
+Drag and drop your .exe (or .zip) into the Attach binaries by dropping them here... box.
+
+(Optional) Drag and drop repair.ps1 as a secondary file if you want users to have the repair script handy.
+
+3
+3. Finalize and Publish
+Ensure Pre-release is selected at the bottom.
+
+Click Publish release.
+
+which is the better file to keep with the exe?
+
+install_and_repair.ps1 [source: 14] is the far better file to keep.
+
+Why install_and_repair.ps1 is Superior
+Automatically Fixes VC++ Runtime: PyInstaller .exe builds often crash on fresh Windows installs because the Visual C++ Redistributable is missing. install_and_repair.ps1 checks for it and offers to download and install it automatically. repair.ps1 ignores this entirely.   
+PS1
++ 1
+
+Active Bluetooth Repair: If the Windows Bluetooth service (bthserv) is stopped, install_and_repair.ps1 attempts to start it automatically. repair.ps1 only prints its status.   
+PS1
++ 1
+
+Better User Experience: Includes formatted headers, clear status indicators ([OK], [WARN], [ERR]), interactive prompts, and fallback options if requirements.txt is missing.   
+PS1
+
+What to do with repair.ps1
+You can safely delete or archive repair.ps1 [source: 13] from your project folder to avoid confusion, as install_and_repair.ps1 replaces all of its functionality.   
+PS1
++ 1
+
+final?
+
+Almost! Remove two redundant files before zipping and publishing:
+
+Quick Clean-Up
+Delete _internal.rar: You already have the extracted _internal folder present. Keeping the .rar file adds 87 MB of unnecessary download size.   
+PNG
++ 1
+
+Delete .gitignore: .gitignore is only needed in your source code repository, not inside an end-user release package.   
+PNG
+
+Final Distribution Checklist
+Your release folder should contain only these items:
+
+_internal/ (Folder)   
+PNG
+
+AymashTain LED Remote.exe
+
+   
+PNG
+
+install_and_repair.ps1
+
+   
+PNG
+
+LICENSE.txt
+
+   
+PNG
+
+README.md
+
+   
+PNG
+
+Next Step
+Select these remaining files, right-click → Compress to ZIP file (e.g., AymashTain-LED-Remote-v0.51-Windows.zip), and upload that single .zip file to your GitHub Release.
+
+final
+
+Extract _internal.rar into this folder before packaging.
+
+Because AymashTain LED Remote.exe is 5.4 MB, it relies on the uncompressed _internal directory to load Python, PySide6, and OpenCV DLLs. If left as a .rar file, running the executable will result in a missing library crash.
+
+Final Steps to Package & Publish
+1
+1. Unpack _internal
+Right-click _internal.rar → select Extract Here (or *Extract to _internal*). Verify that an uncompressed folder named _internal appears alongside AymashTain LED Remote.exe.
+
+2
+2. Delete the .rar File
+Delete _internal.rar to keep the distribution size clean.
+
+3
+3. Zip the Complete Release Folder
+Select all files in this directory:
+
+_internal/ (Folder)
+
+AymashTain LED Remote.exe
+
+aymashtain.ico
+
+install_and_repair.ps1
+
+LICENSE.txt
+
+README.md
+
+Right-click the selected items → Compress to ZIP file → Name it AymashTain-LED-Remote-v0.51-Windows.zip.
+
+4
+4. Publish to GitHub
+Drag AymashTain-LED-Remote-v0.51-Windows.zip into the Attach binaries drop area on your GitHub release page and click Publish release.
+
+keeps doing this
+
+This error occurs on GitHub Releases when you drag a folder (like _internal or the setup folder) directly into the file attachment box, or if you drag a file while it is still being compressed. GitHub's release uploader cannot accept uncompressed folders directly and interprets them as 0-byte empty files.   
+PNG
++ 1
+
+1
+Compress Files into a Single ZIP Archive
+Fix folder upload restriction
+Select all the release files in File Explorer (_internal folder, AymashTain LED Remote.exe, install_and_repair.ps1, LICENSE.txt, README.md, aymashtain.ico).
+
+Right-click the selected items → Compress to ZIP file (or Add to archive... in WinRAR/7-Zip).
+
+Name the zip file AymashTain-LED-Remote-v0.51-Windows.zip.
+
+Verification: Open File Explorer and confirm the new .zip file appears in your folder.
+
+2
+Verify ZIP File Size
+Ensure archive is non-zero
+Check the Size column for AymashTain-LED-Remote-v0.51-Windows.zip in Windows File Explorer. It should be approximately 80 MB to 110 MB.
+
+Verification: If the file size shows 0 KB, wait a few seconds for compression to complete or re-create the archive.
+
+3
+Upload the ZIP File to GitHub
+Final release attachment
+Drag only the AymashTain-LED-Remote-v0.51-Windows.zip file into the Attach binaries box on the GitHub Release page.
+
+Verification: The file upload progress bar will fill, and the filename with its full file size (e.g., ~90 MB) will appear in green under the attachment box.
+
+How can I verify that my GitHub release download links are working properly for users?
+
+To confirm that your release assets are fully accessible and functional for end-users, perform these three verification checks.
+
+1
+Download in Incognito Mode
+Simulate logged-out user
+Open an Incognito or Private browser window and navigate to [https://github.com/aymashtain92/AymashTain-RGB-Universal-Remote/releases](https://github.com/aymashtain92/AymashTain-RGB-Universal-Remote/releases). Click on your release .zip asset to download it.
+
+Verification: The download initiates immediately without prompting for a login or throwing a 404/Access Denied error.
+
+2
+Test the Permanent Direct Download URL
+Link validation
+Copy and paste the following permanent "latest release" URL format into your browser navigation bar:
+[https://github.com/aymashtain92/AymashTain-RGB-Universal-Remote/releases/latest/download/AymashTain-LED-Remote-v0.51-Windows.zip](https://github.com/aymashtain92/AymashTain-RGB-Universal-Remote/releases/latest/download/AymashTain-LED-Remote-v0.51-Windows.zip)
+
+Verification: GitHub automatically redirects to the active release asset and begins downloading the file.
+
+3
+Perform Clean Extraction & Execution Test
+Runtime integrity check
+Move the downloaded .zip file into a clean test directory (such as C:\TempTest), right-click and extract all contents, then double-click AymashTain LED Remote.exe.
+
+Verification: The desktop application opens successfully without popping up missing _internal library or DLL error messages.
+
+https://github.com/aymashtain92/AymashTain-RGB-Universal-Remote/tree/main
+
+
+
+verify everything is ok this way
+
+To verify that your main branch repository structure is clean and professional, check your GitHub page against these three criteria:
+
+1. Essential Project Files (Should be present)
+In the file list for the main branch, verify that you see:
+
+README.md (Project overview, features, and run instructions)
+
+LICENSE (Open-source license file)
+
+.gitignore (Git exclusion rules)
+
+requirements.txt / pyproject.toml (Python dependencies)
+
+main.py & mrstar_protocol.py (Application source code)
+
+install_and_repair.ps1 (Environment setup & repair script)
+
+2. Repository Hygiene (Should NOT be present)
+Ensure these compiled binaries, local database files, and archives are excluded from Git tracking:
+
+❌ dist/ or build/ folders
+
+❌ _internal/ folder or _internal.rar
+
+❌ AymashTain LED Remote.exe
+
+❌ Local database files (*.db) or session logs (session_*.log, session_*.json)
+
+(If any of these are showing up on GitHub, run git rm -r --cached <file-or-folder> locally, commit, and push so Git stops tracking them.)
+
+3. Sidebar Metadata & Release Status
+Look at the right sidebar of your repository homepage:
+
+About: Displays description, tags (python, pyside6, ble, mr-star), and website link.
+
+Releases: Displays v0.51 (or v0.51-alpha) with AymashTain-LED-Remote-v0.51-Windows.zip listed under Assets.
+
+If all three sections match these rules, your open-source release setup is complete and ready for users.
+
+can you not browse the link?
+
+No, I cannot directly visit or browse live web links in real time to view your GitHub page. I don't have a live web browser tool active to fetch and inspect specific URLs on demand.
+
+If you want to verify your repository structure with me, you can check it using any of these quick methods:
+
+Paste a File List: Run dir (or ls) in your project folder, or git status, and paste the output here.
+
+Share a Screenshot: Take a screenshot of your GitHub main repository page showing the file list and the right-hand About / Releases sidebar.
+
+Check the Checklist Yourself:
+
+In Git: main.py, mrstar_protocol.py, install_and_repair.ps1, requirements.txt, README.md, LICENSE, .gitignore.
+
+Not in Git: _internal/, _internal.rar, dist/, build/, .exe files, *.db, session_*.log.
+
+In Releases: A published release tagged v0.51 containing your .zip package.
+
+
+
+
+Gemini is AI and can make mistakes.
+

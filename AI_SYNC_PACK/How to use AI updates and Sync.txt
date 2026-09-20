@@ -1,0 +1,27 @@
+How to use this pack from now on
+Create the folder:
+D:\AymashTain LED Remote\AI_SYNC_PACK
+
+Create the seven files above inside it.
+
+When you talk to any AI:
+
+Upload the AI_SYNC_PACK folder.
+
+Upload the current file you want changed.
+
+Paste the universal prompt from 02_UNIVERSAL_AI_PROMPT.md.
+
+Tell the AI exactly which file to update.
+
+After the AI gives you a full replacement:
+
+Replace the file.
+
+Run the compile command.
+
+Add the new conversation summary to 06_CURRENT_CHAT.md.
+
+Next real task:
+Replace main.py completely with the v0.41 queued version.
+After that, we run the corrected hardware test.
