@@ -136,24 +136,46 @@ Some dates are approximate because several AI chats overlapped.
 - Confirmed `main.py` is still old and unsafe.
 - Started creating AI sync pack.
 
+**Later on 2026-09-19**
+- User made full backup as restore point.
+- User asked where `main.py` replacement is.
+- Assistant admitted it had not yet provided the full `main.py`.
+- User ran:
+  - `python -m py_compile .\hardware_test.py`
+  - `python -m py_compile .\main.py`
+- Both compiled.
+- Assistant confirmed `main.py` is still the old unsafe version.
+- User ran corrected `hardware_test.py`.
+- Hardware test passed at BLE transport level.
+- All 3 strips connected.
+- All commands accepted.
+- Logs saved:
+  - `hardware_test_20260919_211043.log`
+  - `hardware_test_20260919_211043.json`
+  - `hardware_test_20260919_211043.csv`
+
 ---
 
-## 2026-09-20 — Current sync pack
+## 2026-09-20 — Current sync pack update
 
 **User**
-- Requested:
-  - Master summary for AI
-  - Workflow with dates
-  - Universal AI prompt
-  - TODO list for user and AI
-  - Error list for AI only
-  - Developer README
-  - All in one folder
-  - Include this current conversation
+- Asked whether `00_`–`06_` files are 100% up to date.
+- Asked whether to add updates at start or end.
+- Asked for full updated files to copy-paste and overwrite.
 
 **ChatGPT / Current Assistant**
-- Producing this AI_SYNC_PACK.
-- Next step after this pack: replace `main.py` fully, then run corrected hardware test, then camera calibration and hidden-feature lab.
+- Confirmed the pack is not 100% up to date.
+- Listed missing updates:
+  - `mrstar_protocol.py` verified.
+  - `hardware_test.py` compiled and run.
+  - Hardware test passed at BLE transport level.
+  - `main.py` still old and unsafe.
+  - Latest event log shows overlapping Music Sync and duplicate Scroll macros.
+  - Camera still disabled.
+  - Hidden-feature lab still not built.
+  - Global queue and auto-save logs still not built.
+- Providing full replacement content for `00_` through `06_`.
+- Next real step: replace `main.py` completely with v0.41 queued version.
 
 ---
 
@@ -169,5 +191,6 @@ Some dates are approximate because several AI chats overlapped.
 | 2026-09-18 | User | Tested, reported bugs, demanded full files |
 | 2026-09-19 | GitHub Copilot | Found color/brightness split, recommended MR Star library |
 | 2026-09-19 | DeepSeek | Recommended queue, auto-save, camera |
-| 2026-09-19 | User | Replaced protocol and hardware test, compiled |
-| 2026-09-20 | ChatGPT / Current | Created AI sync pack, next full `main.py` rebuild |
+| 2026-09-19 | User | Replaced protocol and hardware test, compiled, ran hardware test |
+| 2026-09-19 | ChatGPT / Assistant | Confirmed protocol, hardware test, main.py still old |
+| 2026-09-20 | ChatGPT / Current | Updated AI sync pack, next full `main.py` rebuild |

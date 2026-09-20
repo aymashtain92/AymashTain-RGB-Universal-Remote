@@ -85,3 +85,10 @@ Do not show this to normal users.
 58. Do not delete logs.
 59. Do not delete DB without backup.
 60. Do not claim something is done if it is not implemented.
+61. Do not assume `main.py` is fixed because it compiles.
+62. Do not run hidden-command sweeps before queue, camera, and emergency stop exist.
+63. Do not claim the hardware test has not been run — it has.
+64. Do not claim the camera works — it is disabled.
+65. Do not use `py -3.12`; the machine has Python 3.14.7.
+66. Do not hardcode brightness strings in tests; use `encode_mrstar_brightness()`.
+67. Do not ignore the latest log evidence: overlapping Music Sync and duplicate macro starts.

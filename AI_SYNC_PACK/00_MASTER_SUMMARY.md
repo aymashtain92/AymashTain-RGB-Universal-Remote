@@ -50,14 +50,17 @@ Installers and dependency files must accept Python 3.14.
 | File | Status | Notes |
 |---|---|---|
 | `mrstar_protocol.py` | UPDATED and verified | Correct documented MR Star color/brightness split. Has `confidence` decoding. |
-| `hardware_test.py` | UPDATED and compiles | Uses protocol functions, sequential writes, two-second holds, saves logs. Not yet hardware-run after update. |
-| `main.py` | OLD / NOT UPDATED | Still contains overlapping `asyncio.create_task()` calls. No global queue. No auto-save session log. Still branded LumenForge in many places. |
+| `hardware_test.py` | UPDATED, compiled, and run | Uses protocol functions, sequential writes, two-second holds, saves logs. Hardware test passed at BLE transport level. |
+| `main.py` | OLD / NOT UPDATED | Still contains overlapping `asyncio.create_task()` calls. No global queue. No auto-save session log. Still branded LumenForge in many places. It compiles, but it is unsafe. |
 | `requirements.txt` | OLD | Needs update to Python 3.14-compatible pins and missing packages. |
 | `Launch AymashTain LED RGB Remote.bat` | Present | Uses `pythonw` or `python`. |
 | `install_lumenforge.ps1` | OLD | Still references LumenForge and Python 3.12 assumptions. |
 | `README.md` | OLD | Still LumenForge / old protocol notes. |
 | `lumenforge.db` | Present | Old database. Can be backed up and migrated. |
 | `logs/` | Present | Contains hardware test logs. |
+| `hardware_test_20260919_211043.log` | Present | Latest hardware test text log. |
+| `hardware_test_20260919_211043.json` | Present | Latest hardware test JSON log. |
+| `hardware_test_20260919_211043.csv` | Present | Latest hardware test CSV log. |
 | `events_20260919_201738.txt` | Present | Old event log. |
 
 ---
@@ -70,64 +73,76 @@ Format:
 
 ```text
 BC 04 06 HH HH SS SS 00 00 55
+```
 
 Where:
 
-HH HH = hue, big-endian, 0–359
-
-SS SS = saturation, big-endian, 0–1000
-
-00 00 = reserved
-
-55 = terminator
+- `HH HH` = hue, big-endian, 0–359
+- `SS SS` = saturation, big-endian, 0–1000
+- `00 00` = reserved
+- `55` = terminator
 
 Examples:
 
-text
+```text
 Red:   BC0406000003E8000055
 Green: BC0406007803E8000055
 Blue:  BC040600F003E8000055
-4.2 Documented MR Star brightness
+```
+
+### 4.2 Documented MR Star brightness
+
 Brightness is a separate command.
 
 Format:
 
-text
+```text
 BC 05 06 BB BB 00 00 00 00 55
+```
+
 Where:
 
-BB BB = brightness, big-endian, 0–1024
-
-00 00 00 00 = reserved
-
-55 = terminator
+- `BB BB` = brightness, big-endian, 0–1024
+- `00 00 00 00` = reserved
+- `55` = terminator
 
 Examples:
 
-text
+```text
 100% = BC0506040000000055
 75%  = BC0506030000000055
 50%  = BC0506020000000055
 25%  = BC0506010000000055
 0%   = BC0506000000000055
-4.3 Power
-text
+```
+
+### 4.3 Power
+
+```text
 ON  = BC01010155
 OFF = BC01010055
-4.4 Captured static / exit dynamic mode
-text
+```
+
+### 4.4 Captured static / exit dynamic mode
+
+```text
 BC04010055
+```
+
 This is captured, not fully documented. Use carefully.
 
-4.5 Captured Scroll sequence
+### 4.5 Captured Scroll sequence
+
 Setup:
 
-text
+```text
 BC0F010155
 BC11010455
+```
+
 Data frames:
 
-text
+```text
 BC0406000003E8000055
 BC0406013E0032000055
 BC04060131002B000055
@@ -153,198 +168,182 @@ BC040600B00215000055
 BC040600C90296000055
 BC040600DF0314000055
 BC040600F7033B000055
+```
+
 End:
 
-text
+```text
 BC0F010155
 BC11010455
+```
+
 This is experimental/captured. It must be isolated from normal color tests.
 
-4.6 Classic Magic Home / Triones compatibility
+### 4.6 Classic Magic Home / Triones compatibility
+
 Not the same protocol.
 
-text
+```text
 ON  = CC2333
 OFF = CC2433
 Color = 56RRGGBB00F0AA
+```
+
 Keep separate. Do not mix with MR Star BC commands.
 
-4.7 Experimental 7E commands
+### 4.7 Experimental 7E commands
+
 Not confirmed. Keep in a lab only.
 
 Examples:
 
-text
+```text
 7E00040101000000EF
 7E00040102000000EF
 7E...
+```
+
 Never use in normal remote or music mode.
 
-5. The white contamination bug
+---
+
+## 5. The white contamination bug
+
 Earlier builds used:
 
-python
+```python
 w = 0xFFFF if pure else 0x0000
 return f"BC0406{hue:04X}{bri:04X}{w:04X}55"
+```
+
 This mixed brightness and a fake white channel into the color command.
 
 Result:
 
-Red looked pink/white
-
-Green/blue looked pale
-
-Yellow looked yellow-green
-
-Music modes dominated by white
-
-Static button produced yellow-greenish color
+- Red looked pink/white
+- Green/blue looked pale
+- Yellow looked yellow-green
+- Music modes dominated by white
+- Static button produced yellow-greenish color
 
 Correct fix:
 
-Color command is only BC0406HHHHSSSS000055
+- Color command is only `BC0406HHHHSSSS000055`
+- Brightness is a separate `BC0506BBBB0000000055`
+- Do not use `FFFF` as a white field
+- Achromatic/white should be handled as a separate neutral command or tested separately
 
-Brightness is a separate BC0506BBBB0000000055
+---
 
-Do not use FFFF as a white field
+## 6. Hardware test results
 
-Achromatic/white should be handled as a separate neutral command or tested separately
+The corrected `hardware_test.py` was compiled and run on **2026-09-19 21:10:43**.
 
-6. Hardware test results so far
-The original hardware_test.py connected to all 3 strips and all writes were accepted:
+Result:
 
-41:42:59:F1:C8:68 connected using FFF3
+- All 3 strips connected.
+- All used `0000fff3-0000-1000-8000-00805f9b34fb`.
+- Every command was accepted.
+- No retries were needed.
+- No strip disconnected during the test.
+- Logs were saved:
+  - `D:\AymashTain LED Remote\logs\hardware_test_20260919_211043.log`
+  - `D:\AymashTain LED Remote\logs\hardware_test_20260919_211043.json`
+  - `D:\AymashTain LED Remote\logs\hardware_test_20260919_211043.csv`
 
-41:42:43:E7:8B:F6 connected using FFF3
-
-41:42:F9:D7:45:B0 connected using FFF3
-
-Logs saved in:
-
-text
-D:\AymashTain LED Remote\logs\hardware_test_20260919_211043.log
-D:\AymashTain LED Remote\logs\hardware_test_20260919_211043.json
-D:\AymashTain LED Remote\logs\hardware_test_20260919_211043.csv
 User visual observations from earlier tests:
 
-Connection RGB pulse was not visible in old test.
+- Connection RGB pulse was not visible in old test.
+- Test 1 primary colors were correct.
+- Brightness changes happened too fast to see clearly.
+- Far strip disconnected during some tests.
+- M1/Scroll was disturbed by rapid test commands.
+- Magenta sometimes appeared yellow.
+- Scroll/music kept flipping.
+- Camera would help because user cannot reliably judge shades.
 
-Test 1 primary colors were correct.
+The corrected `hardware_test.py` has now been run.  
+Camera was disabled during that run: `CAMERA_ENABLED = False`.
 
-Brightness changes happened too fast to see clearly.
+---
 
-Far strip disconnected during some tests.
+## 7. Current known problems in main.py
 
-M1/Scroll was disturbed by rapid test commands.
+`main.py` still has:
 
-Magenta sometimes appeared yellow.
-
-Scroll/music kept flipping.
-
-Camera would help because user cannot reliably judge shades.
-
-The corrected hardware_test.py has not yet been run on hardware.
-
-7. Current known problems in main.py
-main.py still has:
-
+```python
 asyncio.create_task(self.send_hex(color_hex))
-
 asyncio.create_task(self.send_hex(brightness_hex))
+```
 
 This allows color and brightness to arrive out of order.
 
 It also:
 
-Has no global serialized command queue
+- Has no global serialized command queue
+- Allows Music Sync to flood BLE
+- Allows two Scroll macros to start at once
+- Does not automatically save session logs on close
+- Still uses `BRIGHTNESS_MIN = 100`, so true zero brightness is impossible
+- Still uses old LumenForge branding in many places
+- Has no camera calibration
+- Has no hidden-feature lab
+- Has no per-device result model in the GUI
+- Has no safe shutdown for qasync
 
-Allows Music Sync to flood BLE
+Latest event log also shows:
 
-Allows two Scroll macros to start at once
+- Overlapping Music Sync commands
+- `Macro start (29 frames @ 55ms)` appearing twice at the same timestamp
+- Scroll/M1 instability
 
-Does not automatically save session logs on close
+---
 
-Still uses BRIGHTNESS_MIN = 100, so true zero brightness is impossible
+## 8. Required v0.41 architecture
 
-Still uses old LumenForge branding in many places
+The next `main.py` must include:
 
-Has no camera calibration
+- AymashTain branding
+- Version v0.41
+- One global serialized BLE command queue
+- Ordered color → brightness sending
+- Per-device write results
+- Three-strip broadcast support
+- Configurable inter-device delay
+- Visible RGB connection confirmation
+- Two-second hardware-test holds
+- No automatic final OFF
+- No M1/Scroll reset during static-color tests
+- Local-only OpenCV camera analysis
+- Camera preview and region selection
+- JSON, CSV, and text logs
+- Automatic event-log saving on application close
+- Command classification/cataloguing
+- Correct zero-brightness handling
+- Safer shutdown
+- AUX/Line-In naming improvements
+- No automatic administrator elevation
+- Python 3.14-compatible installation checks
 
-Has no hidden-feature lab
+---
 
-Has no per-device result model in the GUI
+## 9. Required hardware test architecture
 
-Has no safe shutdown for qasync
+The corrected `hardware_test.py` must:
 
-8. Required v0.41 architecture
-The next main.py must include:
-
-AymashTain branding
-
-Version v0.41
-
-One global serialized BLE command queue
-
-Ordered color → brightness sending
-
-Per-device write results
-
-Three-strip broadcast support
-
-Configurable inter-device delay
-
-Visible RGB connection confirmation
-
-Two-second hardware-test holds
-
-No automatic final OFF
-
-No M1/Scroll reset during static-color tests
-
-Local-only OpenCV camera analysis
-
-Camera preview and region selection
-
-JSON, CSV, and text logs
-
-Automatic event-log saving on application close
-
-Command classification/cataloguing
-
-Correct zero-brightness handling
-
-Safer shutdown
-
-AUX/Line-In naming improvements
-
-No automatic administrator elevation
-
-Python 3.14-compatible installer checks
-
-9. Required hardware test architecture
-The corrected hardware_test.py must:
-
-Connect all three strips
-
-Use FFF3
-
-Send commands sequentially
-
-Wait two seconds between visible stages
-
-Record every device result separately
-
-Not send a final OFF command
-
-Optionally sample one camera region locally
-
-Save JSON, CSV, and text logs automatically
-
-Never upload anything
+- Connect all three strips
+- Use FFF3
+- Send commands sequentially
+- Wait two seconds between visible stages
+- Record every device result separately
+- Not send a final OFF command
+- Optionally sample one camera region locally
+- Save JSON, CSV, and text logs automatically
+- Never upload anything
 
 Corrected test steps:
 
-text
+```text
 1. Connect all selected strips
 2. RGB connection confirmation pulse
 3. Red 100% — hold 2 seconds
@@ -357,266 +356,189 @@ text
 10. Red 0% — hold 2 seconds
 11. Restore red 100% — hold 2 seconds
 12. Leave the lights ON
+```
+
 Each command order:
 
-text
+```text
 power/color command
 wait 100 ms
 brightness command
 wait 2 seconds
 camera capture
+```
+
 No Scroll, M1, experimental 7E, or automatic OFF in this test.
 
-10. Camera plan
+---
+
+## 10. Camera plan
+
 Camera must be local-only.
 
 No internet. No cloud. No uploads.
 
 Required:
 
-Select camera
-
-Show live preview
-
-Define Strip 1 region
-
-Define Strip 2 region
-
-Define Strip 3 region
-
-Run synchronized test
-
-Capture each region after every command
-
-Export results to CSV and JSON
-
-Measure average RGB
-
-Measure brightness
-
-Measure white contamination
-
-Compare expected vs observed color
-
-Report PASS / FAIL
+- Select camera
+- Show live preview
+- Define Strip 1 region
+- Define Strip 2 region
+- Define Strip 3 region
+- Run synchronized test
+- Capture each region after every command
+- Export results to CSV and JSON
+- Measure average RGB
+- Measure brightness
+- Measure white contamination
+- Compare expected vs observed color
+- Report PASS / FAIL
 
 Example result:
 
-text
+```text
 Expected: pure red
 Observed: RGB(224, 36, 42)
 White contamination: low
 Result: PASS
-The current camera region (0, 0, 640, 480) is only a placeholder.
+```
 
-11. Hidden-feature laboratory plan
+The current camera region `(0, 0, 640, 480)` is only a placeholder.
+
+---
+
+## 11. Hidden-feature laboratory plan
+
 Purpose: discover all hidden patterns and functions.
 
 Must include:
 
-Catalog known commands
-
-Generate safe candidate hex commands
-
-Send one candidate at a time
-
-Wait and capture camera result
-
-Record:
-
-exact command
-
-device
-
-timestamp
-
-BLE success/failure
-
-observed RGB
-
-brightness
-
-white contamination
-
-user label/notes
-
-Include stop button
-
-Conservative limits
-
-Emergency stop
-
-No uncontrolled brute-force by default
+- Catalog known commands
+- Generate safe candidate hex commands
+- Send one candidate at a time
+- Wait and capture camera result
+- Record:
+  - exact command
+  - device
+  - timestamp
+  - BLE success/failure
+  - observed RGB
+  - brightness
+  - white contamination
+  - user label/notes
+- Include stop button
+- Conservative limits
+- Emergency stop
 
 Do not start hidden-command sweep until logging, queue, camera calibration, and emergency stop are in place.
 
-12. Audio / music sync plan
+---
+
+## 12. Audio / music sync plan
+
 Current music sync is unreliable because:
 
-It sends too many commands
-
-Commands overlap
-
-It is not rate-limited
-
-It has no duplicate suppression
-
-It does not use real FFT spectrum bars
-
-Sensitivity and speed behavior are wrong
-
-Strobe and pulse are nearly identical
-
-It can turn lights off after song ends
-
-AUX/Line-In naming is confusing
-
-It cannot read actual LED state
+- It sends too many commands
+- Commands overlap
+- It is not rate-limited
+- It has no duplicate suppression
+- It does not use real FFT spectrum bars
+- Sensitivity and speed behavior are wrong
+- Strobe and pulse are nearly identical
+- It can turn lights off after song ends
+- AUX/Line-In naming is confusing
+- It cannot read actual LED state
 
 Required:
 
-Use same serialized command queue
+- Use same serialized command queue
+- Log audio and LED timing together
+- Prevent duplicate commands
+- Prevent Scroll/M1 interference
+- Add proper spectrum and beat behavior later
+- Add media player with play/pause/stop/next/back/speed/equalizer presets later
+- Distinguish:
+  - Microphone
+  - Line In / AUX input
+  - Bluetooth audio input
+  - Stereo Mix
+  - WASAPI loopback
+  - music files
 
-Log audio and LED timing together
+---
 
-Prevent duplicate commands
+## 13. GUI / UX requirements
 
-Prevent Scroll/M1 interference
+- Compact startup size
+- Correct aspect ratio
+- 150-LED horizontal strip visualization
+- Connection RGB pulse
+- Application-wide File, View, Help menus
+- Profile management outside main remote panel
+- Import/export remote profiles
+- About dialog
+- Contact email: ayman.attia.ab@gmail.com
+- GitHub: https://github.com/aymashtain92
+- Automatic session log saving on close
+- Timestamped logs that are not overwritten
+- Version v0.41
 
-Add proper spectrum and beat behavior later
+---
 
-Add media player with play/pause/stop/next/back/speed/equalizer presets later
+## 14. Packaging requirements
 
-Distinguish:
-
-Microphone
-
-Line In / AUX input
-
-Bluetooth audio input
-
-Stereo Mix
-
-WASAPI loopback
-
-music files
-
-13. GUI / UX requirements
-Compact startup size
-
-Correct aspect ratio
-
-150-LED horizontal strip visualization
-
-Connection RGB pulse
-
-Application-wide File, View, Help menus
-
-Profile management outside main remote panel
-
-Import/export remote profiles
-
-About dialog
-
-Contact email: ayman.attia.ab@gmail.com
-
-GitHub: https://github.com/aymashtain92
-
-Automatic session log saving on close
-
-Timestamped logs that are not overwritten
-
-Version v0.41
-
-14. Packaging requirements
 Later, not now:
 
-PyInstaller
-
---noconsole
-
-Name: AymashTain LED Remote
-
-Icon: aymashtaine.ico or AymashTain.ico
-
-Do not bundle _internal.rar
-
-Do not include .gitignore in release ZIP
-
-Keep only:
-
-_internal/
-
-AymashTain LED Remote.exe
-
-install_and_repair.ps1
-
-LICENSE.txt
-
-README.md
+- PyInstaller
+- `--noconsole`
+- Name: AymashTain LED Remote
+- Icon: aymashtaine.ico or AymashTain.ico
+- Do not bundle `_internal.rar`
+- Do not include `.gitignore` in release ZIP
+- Keep only:
+  - `_internal/`
+  - `AymashTain LED Remote.exe`
+  - `install_and_repair.ps1`
+  - `LICENSE.txt`
+  - `README.md`
 
 No EXE extraction now.
 
-15. Current chat summary
-This current conversation is between the user and ChatGPT (this assistant).
+---
 
-The user asked for a complete sync pack so any future AI can catch up without long back-and-forth.
+## 15. Current chat summary
 
-This assistant:
+This current conversation is between the user and ChatGPT.
 
-Reviewed all previous AI conversations and logs.
+User asked whether the `00_`–`06_` AI_SYNC_PACK files are 100% up to date.
 
-Confirmed the documented MR Star color/brightness split.
+Assistant confirmed they are not 100% up to date and listed the missing updates.
 
-Provided a full corrected mrstar_protocol.py.
+Assistant is now providing complete replacement content for `00_` through `06_`.
 
-Provided a full corrected hardware_test.py.
+Next real step is to replace `main.py` completely with the v0.41 queued version.
 
-Confirmed both files compile.
+---
 
-Confirmed main.py is still the old unsafe version.
+## 16. Golden rules for any AI reading this
 
-Began creating this AI sync pack.
-
-The next real step is to replace main.py completely with the v0.41 queued version, then run the corrected hardware test, then add camera calibration and hidden-feature lab.
-
-16. Golden rules for any AI reading this
-Never mix MR Star BC commands with Classic 56/CC commands.
-
-Never put brightness inside the color command.
-
-Never use FFFF as a white field.
-
-Never use asyncio.create_task() for color and brightness separately.
-
-Always send color first, then brightness, with a small gap.
-
-Always serialize BLE writes through one queue.
-
-Never run Music Sync or Scroll during static color tests.
-
-Never claim the app can read actual LED state over BLE.
-
-Camera is the only physical verification unless controller readback is discovered.
-
-Camera stays local-only. No uploads.
-
-Use UUID, not hardcoded handle 13/19.
-
-Python is 3.14.7, not 3.12.
-
-Provide full replacement files, not partial patches, unless the user explicitly asks for a small edit.
-
-Always run python -m py_compile .\file.py after replacement.
-
-Do not auto-elevate to administrator.
-
-Do not overwrite previous logs.
-
-Preserve all captured Scroll frames exactly.
-
-Keep experimental commands in a separate lab.
-
-The user is not a developer. Give visual, step-by-step, one point at a time.
-
-This project is free. No ads. No telemetry.
+1. Never mix MR Star BC commands with Classic 56/CC commands.
+2. Never put brightness inside the color command.
+3. Never use `FFFF` as a white field.
+4. Never use `asyncio.create_task()` for color and brightness separately.
+5. Always send color first, then brightness, with a small gap.
+6. Always serialize BLE writes through one queue.
+7. Never run Music Sync or Scroll during static color tests.
+8. Never claim the app can read actual LED state over BLE.
+9. Camera is the only physical verification unless controller readback is discovered.
+10. Camera stays local-only. No uploads.
+11. Use UUID, not hardcoded handle 13/19.
+12. Python is 3.14.7, not 3.12.
+13. Provide full replacement files, not partial patches, unless the user explicitly asks for a small edit.
+14. Always run `python -m py_compile .\file.py` after replacement.
+15. Do not auto-elevate to administrator.
+16. Do not overwrite previous logs.
+17. Preserve all captured Scroll frames exactly.
+18. Keep experimental commands in a separate lab.
+19. The user is not a developer. Give visual, step-by-step, one point at a time.
+20. This project is free. No ads. No telemetry.

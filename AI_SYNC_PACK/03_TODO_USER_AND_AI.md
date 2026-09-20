@@ -4,20 +4,44 @@ This is the easy-to-read list of things not done yet.
 
 ---
 
-## A. Immediate next steps
+## A. Completed already
+
+- [x] `mrstar_protocol.py` replaced and verified.
+- [x] Color command verified: `BC0406000003E8000055`
+- [x] Brightness command verified: `BC0506040000000055`
+- [x] Decoder shows `confidence: documented`.
+- [x] `hardware_test.py` replaced and compiled.
+- [x] `hardware_test.py` run on hardware.
+- [x] All 3 strips connected.
+- [x] All commands accepted.
+- [x] Hardware test logs saved:
+  - `hardware_test_20260919_211043.log`
+  - `hardware_test_20260919_211043.json`
+  - `hardware_test_20260919_211043.csv`
+- [x] Full backup made by user.
+
+---
+
+## B. Immediate next steps
 
 - [ ] Replace `main.py` completely with v0.41 queued version.
 - [ ] Add global serialized BLE command queue.
 - [ ] Send color first, brightness second, with 100 ms gap.
+- [ ] Remove old `asyncio.create_task()` color/brightness overlap.
 - [ ] Add automatic session log saving on close.
 - [ ] Add unified BLE/audio/camera/error log.
-- [ ] Run corrected `hardware_test.py`.
-- [ ] Confirm all 3 strips react correctly.
+- [ ] Prevent Music Sync from flooding BLE.
+- [ ] Prevent two Scroll macros from running at once.
 - [ ] Confirm far strip stays connected.
 - [ ] Confirm 0% brightness turns strip dark.
 - [ ] Confirm final red 100% is restored.
+- [ ] Update `requirements.txt` for Python 3.14.7 and `bleak>=0.22`.
+- [ ] Rename all LumenForge references to AymashTain.
+- [ ] Rename launcher to `Launch AymashTain LED RGB Remote.bat`.
 
-## B. Camera
+---
+
+## C. Camera
 
 - [ ] Add camera selection.
 - [ ] Add camera preview.
@@ -32,8 +56,12 @@ This is the easy-to-read list of things not done yet.
 - [ ] Report PASS / FAIL.
 - [ ] Export CSV and JSON.
 - [ ] Keep camera local-only.
+- [ ] Add exposure lock.
+- [ ] Add white balance lock.
 
-## C. Hidden-feature lab
+---
+
+## D. Hidden-feature lab
 
 - [ ] Add command catalog.
 - [ ] Add safe candidate generator.
@@ -45,12 +73,14 @@ This is the easy-to-read list of things not done yet.
 - [ ] Add conservative limits.
 - [ ] Never brute-force without emergency stop.
 
-## D. Main app
+---
+
+## E. Main app
 
 - [ ] Change all branding from LumenForge to AymashTain.
 - [ ] Set version to v0.41.
 - [ ] Set `BRIGHTNESS_MIN = 0`.
-- [ ] Set `BRIGHTNESS_MAX = 1000`.
+- [ ] Set `BRIGHTNESS_MAX = 1000` or 900 depending on final test.
 - [ ] Remove old `FFFF` white logic.
 - [ ] Use `encode_mrstar_color` and `encode_mrstar_brightness`.
 - [ ] Add per-device write results.
@@ -73,7 +103,9 @@ This is the easy-to-read list of things not done yet.
 - [ ] Add equalizer presets later.
 - [ ] Add screen/audio reactive effects later.
 
-## E. Music sync
+---
+
+## F. Music sync
 
 - [ ] Use serialized command queue.
 - [ ] Add rate limiting.
@@ -91,7 +123,9 @@ This is the easy-to-read list of things not done yet.
 - [ ] Log audio and LED timing together.
 - [ ] Prevent Scroll/M1 interference.
 
-## F. Protocol / testing
+---
+
+## G. Protocol / testing
 
 - [ ] Confirm white/neutral command.
 - [ ] Confirm static command across all strips.
@@ -102,7 +136,9 @@ This is the easy-to-read list of things not done yet.
 - [ ] Confirm no command overlap.
 - [ ] Confirm logs are complete.
 
-## G. Packaging later
+---
+
+## H. Packaging later
 
 - [ ] Update `requirements.txt`.
 - [ ] Update installer to Python 3.14.
@@ -112,11 +148,3 @@ This is the easy-to-read list of things not done yet.
 - [ ] Add LICENSE.
 - [ ] Add developer README.
 - [ ] Add user README later.
-
-## H. Legal & User Documentation
-
-- [ ] Create `README_USER.md` (non-developer guide).
-- [ ] Create `LEGAL.md` (terms, disclaimer, privacy, free-software pledge).
-- [ ] Add exposure lock controls to Camera tab (Lock Exposure checkbox, Exposure slider, Lock White Balance checkbox).
-- [ ] Cap brightness slider to 900 max in the UI to prevent controller crashing.
-- [ ] Add warning label next to brightness slider: "Above 900 may cause controller lag."

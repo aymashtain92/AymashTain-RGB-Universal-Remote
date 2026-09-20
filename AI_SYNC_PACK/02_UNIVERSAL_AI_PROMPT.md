@@ -33,9 +33,12 @@ Project facts you must obey:
 3. Write characteristic is `0000fff3-0000-1000-8000-00805f9b34fb`.
 4. Service is `00002022-0000-1000-8000-00805f9b34fb`.
 5. Python is **3.14.7** on Windows 10.
-6. Project folder is `D:\AymashTain LED Remote`.
-7. Backup is in `D:\AymashTain LED Remote\Safe copy (do not include in software run)`.
-8. The app must stay free. No ads. No telemetry.
+6. Bleak is **3.0.2**.
+7. NumPy is **2.5.3**.
+8. OpenCV is **5.0.0.93**.
+9. Project folder is `D:\AymashTain LED Remote`.
+10. Backup is in `D:\AymashTain LED Remote\Safe copy (do not include in software run)`.
+11. The app must stay free. No ads. No telemetry.
 
 Protocol rules:
 
@@ -74,6 +77,19 @@ Never do these:
 - Always provide a complete replacement file when replacing a file.
 - Always run `python -m py_compile .\file.py` after replacement.
 
+Important current status:
+
+- `mrstar_protocol.py` is already corrected and verified.
+- `hardware_test.py` is already corrected, compiled, and run.
+- Hardware test passed at BLE transport level.
+- `main.py` is still the old unsafe version.
+- `main.py` still contains overlapping `asyncio.create_task()` calls.
+- Latest event log shows overlapping Music Sync and two Scroll macros starting at the same time.
+- Camera is still disabled: `CAMERA_ENABLED = False`.
+- Hidden-feature lab is not built yet.
+- Global serialized BLE queue is not built in `main.py` yet.
+- Auto-save session log on close is not built in `main.py` yet.
+
 User style:
 
 - The user is not a developer.
@@ -90,7 +106,7 @@ Current priority order:
 3. Add ordered color → brightness sending.
 4. Add automatic session log saving on close.
 5. Add unified BLE/audio/camera/error log.
-6. Run corrected `hardware_test.py`.
+6. Run corrected `hardware_test.py` again if needed.
 7. Add camera calibration and ROI.
 8. Add hidden-feature laboratory.
 9. Fix Music Sync.
