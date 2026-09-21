@@ -1,0 +1,47 @@
+﻿# AymashTain debug run - 20260922_011401
+Log file : D:\Coding projects\aymashtain-led-remote-Source\debug_powershell_run_20260922_011401.txt
+Root     : D:\Coding projects\aymashtain-led-remote-Source
+Data dir : C:\Users\aymas\AppData\Local\AymashTain
+Launch timeout: 40 s
+
+==============================================================================
+== 0. Clean up lingering python processes from this project
+==============================================================================
+Killed 0 lingering process(es).
+
+==============================================================================
+== 1. Environment
+==============================================================================
+Date  : 2026-09-22 01:14:03
+OS    : Microsoft Windows 10 Pro
+Build : 10.0.19045.0
+Python launcher: python
+Python version : Python 3.14.7
+
+Package versions:
+  bleak              3.0.2
+  numpy              2.5.3
+  opencv-python      5.0.0.93
+  PySide6            6.11.2
+  sounddevice        0.5.6
+  soundfile          0.14.0
+  pytest             9.1.1
+
+==============================================================================
+== 2. py_compile every .py under aymashtain\
+==============================================================================
+Found 32 .py file(s)
+All files compile clean.
+
+==============================================================================
+== 3. python -m pytest -q
+==============================================================================
+...........................                                              [100%]
+27 passed in 0.71s
+
+
+==============================================================================
+== 4. Launch attempt - run.bat, then python .\main.py (grace 40 s)
+==============================================================================
+
+Trying: run.bat

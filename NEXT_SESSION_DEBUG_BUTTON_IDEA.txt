@@ -1,0 +1,27 @@
+﻿PROMPT FOR NEXT AI SESSION - ADD A DEBUG BUTTON INSIDE THE APP
+
+Goal: a small "Run diagnostics" button inside the app that performs
+the same checks this PowerShell script performs, and writes the
+report to the same folder.
+
+Placement (suggested): Help menu -> "Run diagnostics", or a new
+"Diagnostics" group box on the Options tab.
+
+Behaviour when clicked:
+  1. Run in a background thread (do not block the UI):
+     - py_compile every .py under aymashtain\
+     - collect pip versions of the six key packages
+     - import aymashtain, aymashtain.app, and MainWindow in
+       subprocesses so a broken module cannot crash the running app
+  2. Write the report to:
+       <project root>\debug_button_YYYYMMDD_HHMMSS.txt
+  3. Show a message box: "Diagnostics saved to <path>. Open folder?"
+  4. Never touch app state. Never send frames. Never modify any file
+     except the one report it writes.
+
+Files to touch (one at a time, full replacements):
+  - aymashtain/ui/main_window.py   (menu item + handler)
+  - aymashtain/ui/tabs/options_tab.py   (optional - button placement)
+
+Do NOT add this until Round 3 verification is complete and the
+launch failure from Session 12 is fixed.
