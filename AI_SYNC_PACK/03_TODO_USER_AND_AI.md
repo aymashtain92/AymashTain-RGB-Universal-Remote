@@ -3,10 +3,30 @@
 Easy-to-read list of what is done and what is left.
 
 **Version:** v0.61 Alpha
+**Last updated:** 2026-09-21 (after first live test run)
 
 ---
 
-## A. Done
+## A0. P0 - Active / Immediate
+
+- [ ] **[P0] Flat handoff bundle**
+  - Rewrite `make_handoff.py` so the ZIP it produces is:
+    - **One folder, zero subdirectories** (all files at the root of the ZIP).
+    - **No duplicate filenames** — nested paths become `folder__file.py`
+      (e.g. `aymashtain__ui__tabs__remote_tab.py`).
+    - **Every text file starts with a `# Original Path: <real/path>` header**
+      so any AI knows where it belongs.
+    - **Docs merged into 3 files:**
+      - `00_PROJECT_MASTER_DOCS.md` (00_MASTER_SUMMARY + 02_UNIVERSAL_AI_PROMPT + 05_DEVELOPER_README + 07_HOW_TO_USE_AI_SYNC)
+      - `01_WORKFLOW_AND_TODO.md` (01_WORKFLOW + 03_TODO + 04_AI_ERRORS_ONLY)
+      - `02_CURRENT_CHAT.md` (06_CURRENT_CHAT)
+    - **Total file count well under 50** (DeepSeek's upload cap).
+    - Still numbered per run: `handoff_001.zip`, `handoff_002.zip`, etc.
+  - **Test:** run `make_handoff.bat`, unzip, confirm flat folder, count files, confirm < 50.
+
+---
+
+## A. Done (Sessions 1-9)
 
 ### Protocol and hardware
 
@@ -30,8 +50,7 @@ Easy-to-read list of what is done and what is left.
       Lab, Events, Options.
 - [x] Auto-reconnect.
 - [x] Emergency stop (Esc + Control menu).
-- [x] App confirmed running: 3/3 strips connect, 54 frames sent, 0
-      failed.
+- [x] App confirmed running: 3/3 strips connect, 54 frames sent, 0 failed.
 - [x] PyInstaller spec, `build_exe.bat`, `run.bat`, `repair.ps1`.
 - [x] `CREDITS.md` added.
 - [x] `.gitignore` cleaned.
@@ -39,12 +58,10 @@ Easy-to-read list of what is done and what is left.
 
 ### Round 2 - Session 5
 
-- [x] `__init__.py` - version bumped to `0.61.0` +
-      `APP_DISPLAY_VERSION`.
+- [x] `__init__.py` - version bumped to `0.61.0` + `APP_DISPLAY_VERSION`.
 - [x] `config.py` - `theme_mode`, dev lock, brightness clamp, camera /
       audio slots, window memory, per-pattern sources.
-- [x] `options_tab.py` - **NEW FILE**, all app-wide settings in one
-      place.
+- [x] `options_tab.py` - **NEW FILE**.
 - [x] `tabs/__init__.py` - exports `OptionsTab`.
 - [x] `main_window.py` - Options tab, View + Options menus, dev lock,
       Extract log, min window 300x300, window memory.
@@ -70,178 +87,181 @@ Easy-to-read list of what is done and what is left.
 - [x] `AI_SYNC_PACK/05_DEVELOPER_README.md` - v0.61, hand-off section.
 - [x] `AI_SYNC_PACK/06_CURRENT_CHAT.md` - Sessions 5 and 6 appended.
 
-### Round 2 - Session 7 (remaining code + sync pack cleanup)
+### Round 2 - Session 7
 
-- [x] `events_tab.py` - user-facing "Export log..." only. Log path is
-      never shown to the end user. Format picked by file dialog
-      extension. Default filename uses the Options save location.
-- [x] `theme.py` - dark-mode highlights softened (indigo-800 tabs,
-      indigo-700 accent buttons, zinc-300 slider handle). Menu audit:
-      `pressed`, `disabled`, `separator`, `indicator` rules added to
-      both themes. Light theme brought to parity with dark.
-- [x] `remote_tab.py` - preset buttons now carry colour as a small icon
-      (`_color_swatch()`) instead of an inline `border-left` stylesheet.
-      Old approach wiped every other button rule, which is why "warm
-      white" / "cool white" rendered as plain grey rectangles. Inline
-      `color: #71717A` on the clamp label removed (theme handles muted
-      text now). Remaining unicode chars swapped for ASCII.
-- [x] `sweep_tab.py` - brightness sweep now runs *within* the Options
-      min/max range instead of sweeping 0..1 and clamping step by step.
-      Reads `settings.brightness_min` / `brightness_max` fresh on every
-      step. New info line shows the range when brightness mode is
-      selected. `sync_clamp_notice()` public hook for the main window.
-- [x] `console_tab.py` - any `BC0506` brightness frame typed or pasted
-      in is clamped against the Options min/max before it is queued.
-      "Decode only" shows a preview of what would be clamped without
-      sending. Output line prints `original -> clamped` when a frame was
-      adjusted. New info label + `sync_clamp_notice()` hook.
-- [x] Sync pack cleanup - `00_MASTER_SUMMARY.md`, `01_WORKFLOW.md`,
-      `03_TODO_USER_AND_AI.md` re-saved clean as UTF-8.
+- [x] `events_tab.py` - user-facing "Export log..." only. Log path never
+      shown to the end user.
+- [x] `theme.py` - dark-mode highlights softened. Menu audit done. Light
+      theme brought to parity with dark in the stylesheet itself.
+- [x] `remote_tab.py` - preset buttons carry colour as a small icon
+      (`_color_swatch()`); inline `border-left` stylesheet removed;
+      remaining unicode chars swapped for ASCII.
+- [x] `sweep_tab.py` - brightness sweep runs *within* the Options min/max
+      range. New info line. `sync_clamp_notice()` public hook added.
+- [x] `console_tab.py` - `BC0506` frames clamped against Options min/max
+      before queueing. "Decode only" preview. New info label +
+      `sync_clamp_notice()` hook.
+- [x] Sync pack cleanup - `00`, `01`, `03` re-saved clean as UTF-8.
 
-### Round 2 - Final compile pass
+### Round 2 - Session 8
 
-- [x] `options_tab.py`, `tabs/__init__.py`, `main_window.py`, `main.py`
-- [x] `camera_tab.py`, `strip_preview.py`, `music_tab.py`
-- [x] `make_handoff.py`, `theme.py`, `remote_tab.py`
-- [x] `events_tab.py`, `sweep_tab.py`, `console_tab.py`
+- [x] `tabs/__init__.py` - `OptionsTab` export was missing, added.
+- [x] `music_tab.py` - `_stop_reacting()` alias added for emergency stop.
+- [x] `aymashtain/__init__.py` - restored after import-collision incident.
+- [x] Full compile pass clean.
+- [x] `python -m pytest -q` -> **27 passed**.
 
----
+### Round 2 - Session 9
 
-## B. Now - test round
+- [x] All Round 2 code edits complete.
+- [x] Sync pack updated for first live test run.
+- [x] Hand-off bundle prepared.
 
-Do these in order. Tick as you go.
+### Live test run - 2026-09-21
 
-### Compile
+Results from first full launch and Section B walkthrough:
 
-- [ ] Run the full compile pass (see the command block at the bottom
-      of this file). No output on any line = all clean.
+**Passed**
 
-### Launch and smoke test
+- [x] App launches with `python .\main.py` or `run.bat`.
+- [x] 9 tabs visible when Developer Tools is ON.
+- [x] 8 tabs visible when Developer Tools is OFF (Lab hidden).
+- [x] Version string shows `v0.61 Alpha` in title bar and About box.
+- [x] Remote preset buttons render with small coloured square icons.
+- [x] Dragging the brightness slider updates the neon preview *live*.
+- [x] Releasing the slider sends exactly one `BC0506` frame.
+- [x] Remote brightness clamp notice appears under the slider.
+- [x] Sweep every step lands inside the Options range (no collapse).
+- [x] Colour frame `BC0406000003E8000055` passes through Console untouched.
+- [x] Events tab filter checkboxes work.
+- [x] Events search box filters live.
+- [x] "Export log..." opens a save dialog at the Options save location.
+- [x] Save as `.csv` opens cleanly in Excel.
+- [x] Save as `.json` is valid JSON.
+- [x] After export, the status line just says "Log exported" — no path shown.
+- [x] Dark mode - no harsh bright highlights.
+- [x] Every menu opens and its selected item is readable.
+- [x] Options - changing theme updates the app instantly.
+- [x] Options - toggling Developer Tools hides/shows the Lab tab.
+- [x] Options - brightness min/max sliders stay ordered.
+- [x] Options - Save location Browse button works; Reset clears it.
+- [x] Options - Camera device / resolution / FPS dropdowns reflect settings.
+- [x] Options - Window "Remember screen, position, size" saves and restores.
+- [x] Camera - preview border is light grey when closed, dark grey when open.
+- [x] Music - Play button plays the selected row.
+- [x] Music - double-click on a row still plays it.
+- [x] Music - mic devices are NOT listed (only in Options).
+- [x] Music - controller patterns disable the source combo.
+- [x] Music - brightness respects the Options clamp.
+- [x] Esc stops a sweep.
+- [x] Esc stops a hidden lab run.
+- [x] Control menu -> "Stop all activity" works.
+- [x] Session log `session_*.log` / `*.json` / `*.csv` created fresh.
+- [x] Closing the app writes the `.json` file.
+- [x] Nothing overwrote an older session log.
 
-- [ ] App launches with `python .\main.py` or `run.bat`.
-- [ ] 9 tabs visible when Developer Tools is ON.
-- [ ] 8 tabs visible when Developer Tools is OFF (Lab hidden).
-- [ ] Version string shows `v0.61 Alpha` in the title bar and About box.
+**Failed / broken - to fix in Round 3**
 
-### Remote tab
-
-- [ ] Preset buttons render with small coloured square icons next to
-      the label (Red, Orange, Yellow, Green, Cyan, Blue, Violet,
-      Magenta, Warm white, Cool white).
-- [ ] Dragging the brightness slider updates the neon preview *live*.
-- [ ] Releasing the slider sends exactly one `BC0506` frame (check the
-      Events tab counter).
-- [ ] Set Options brightness max to 60%, come back to Remote, release
-      the slider at 100% — the strip stops at 60% and the clamp notice
-      appears under the slider.
-
-### Sweep tab
-
-- [ ] Select "Brightness (0-100%)" mode — the info line shows the
-      Options range (e.g. "Brightness sweep will run from 20% to 80%").
-- [ ] Run the sweep — every step lands inside the Options range, no
-      step collapses to the same value.
-- [ ] Change the Options range mid-run — the next step follows the new
-      range.
-
-### Console tab
-
-- [ ] The info label at the top says whether the clamp is active.
-- [ ] Paste `BC0506040000000055` (100%) with Options max at 60%.
-- [ ] Click "Decode only" — an orange clamp preview line appears.
-- [ ] Click "Send all" — the output shows
-      `BC0506040000000055 -> clamped to BC050603... -> N device(s)`.
-- [ ] A colour frame like `BC0406000003E8000055` passes through
-      untouched.
-
-### Events tab
-
-- [ ] Filter checkboxes work.
-- [ ] Search box filters live.
-- [ ] "Export log…" opens a save dialog defaulting to the Options save
-      location.
-- [ ] Save as `.csv` — file opens cleanly in Excel.
-- [ ] Save as `.json` — file is valid JSON.
-- [ ] After export, the status line just says "Log exported" — the path
-      is NOT shown.
-
-### Theme
-
-- [ ] Toggle dark mode from the View menu — no harsh bright highlights.
-- [ ] Every menu opens and its selected item is readable.
-- [ ] Toggle light mode — camera tab borders, tab bar, menus all look
-      correct.
-- [ ] Toggle "Follow system" in Options — picks up the OS setting.
-
-### Options tab
-
-- [ ] Changing theme updates the app instantly.
-- [ ] Toggling Developer Tools hides/shows the Lab tab.
-- [ ] Brightness min / max sliders stay ordered (min never above max).
-- [ ] Save location Browse button works; Reset clears it.
-- [ ] Camera device / resolution / FPS dropdowns reflect current
-      settings.
-- [ ] Window "Remember screen, position, size" checkbox saves on close
-      and restores on next launch.
-
-### Camera tab
-
-- [ ] Preview border is light grey when closed, dark grey when open.
-- [ ] Resolution dropdown changes the capture size.
-- [ ] FPS dropdown changes the frame rate.
-- [ ] Exposure lock: status line honestly says whether the driver
-      accepted it, or "driver refused lock — auto may win".
-- [ ] WB lock: same honesty.
-- [ ] Camera is local-only — no network traffic.
-
-### Music & Media tab
-
-- [ ] Play button plays the *selected* row (single click selects,
-      click Play).
-- [ ] Double-click on a row still plays it (shortcut).
-- [ ] Mic devices are NOT listed here — only in Options.
-- [ ] Per-pattern source combo is present for each software pattern.
-- [ ] Controller patterns disable the source combo (strip uses its own
-      USB mic).
-- [ ] Brightness respects the Options clamp.
-
-### Emergency stop
-
-- [ ] Press Esc during a sweep — it stops.
-- [ ] Press Esc during a music pattern — it stops.
-- [ ] Press Esc during a hidden lab run — it stops.
-- [ ] Control menu → "Stop all activity" does the same.
-
-### Session log
-
-- [ ] `%LOCALAPPDATA%\AymashTain\logs\` has a fresh `session_*.log`,
-      `*.json`, `*.csv` from this run.
-- [ ] Closing the app writes the `.json` file.
-- [ ] Nothing overwrote an older session log.
+- [ ] **Console clamp does not fire.** Pasting `BC0506040000000055` with
+      Options max at 60% sent the frame *as-is* and forced brightness to
+      max. Expected: clamp + `original -> clamped` output line.
+- [ ] **Console info label for the clamp range never updates** when the
+      Options range changes. It keeps showing the range from when the tab
+      was first built.
+- [ ] **Console "Decode only" doesn't show the orange clamp preview line.**
+      Only prints `[ 1] BC0506040000000055 — mrstar_brightness: Brightness
+      (unconfirmed)`.
+- [ ] **Sweep mid-run Options range change has no effect.** The new range
+      only takes hold after re-sliding the Remote tab. Sweep must read
+      `settings.brightness_min` / `brightness_max` on every step (it
+      already should — verify).
+- [ ] **Light theme camera tab borders still wrong.** Border colours in
+      light mode don't change between open / closed as expected.
+- [ ] **Remote / Sweep / Console clamp notices don't refresh** when the
+      Options range changes (this is Phase 0 below).
+- [ ] **Camera resolution list too short.** User's max is 2560x1440
+      (video 1440p60, photo 3.7 MP). Need more entries and a note that
+      this is *capture size*, not sensor resolution.
+- [ ] **Camera FPS dropdown doesn't visibly change the frame rate**
+      (laggy at 60).
+- [ ] **Camera exposure lock reports `1/2 s` and stays locked at that
+      value.** Real exposure is not being forced. Status line is honest
+      only if the value shown is correct — it isn't.
+- [ ] **Camera WB lock does nothing.** Status line says "wb=locked
+      (gains frozen)" but the picture behaves as if it isn't.
+- [ ] **Music tab - the 4 controller modes are mixed with the music
+      sources.** Correct grouping: 5 music sources (1 any-mic + 4 with
+      built-in mic), separate from software-pattern sources.
+- [ ] **Music - pressing Esc during a pattern stops it but leaves the
+      strip in whatever colour the last frame was.** Should flip to a
+      stable / neutral colour on stop.
+- [ ] **Music - per-pattern source combos show the wrong list.** User
+      will provide screenshots showing which is music and which is light
+      mode.
+- [ ] **Brightness "issue not fixed"** (user's note on the Remote clamp
+      test) — even though the frame is clamped, the strip itself still
+      goes too bright on some paths. Needs investigation.
 
 ---
 
-## C. Round 3 - rearranged by file-touch order
+## B. Now - Round 3 immediate fixes
 
-The order below groups tasks by the file they touch, so each file is
-opened once. Do them top to bottom.
+Ordered by file-touch so each file is opened once.
 
-### Phase 0 - small fix before Phase 1
+### Phase 0 - clamp-notice wiring (small, unblocks the rest)
 
-- [ ] **`main_window.py`** - wire `sync_clamp_notice()` so the Remote,
-      Sweep and Console tabs refresh their clamp notice when the Options
-      brightness range changes. Three-line patch.
+- [ ] **`main_window.py`** - call `sync_clamp_notice()` on Remote, Sweep
+      and Console when the Options brightness range changes.
+- [ ] **`console_tab.py`** - fix:
+  1. Clamp logic must actually rewrite the frame before sending.
+  2. Info label must refresh when Options range changes.
+  3. "Decode only" must show the orange clamp preview line.
+- [ ] **`sweep_tab.py`** - confirm range is read *fresh on every step*,
+      not cached at start. If cached, fix.
+- [ ] Test: set Options max to 60%, paste `BC0506040000000055` in
+      Console, click Decode only, click Send all. Expected: orange
+      preview + `original -> clamped` + strip stops at 60%.
 
-### Phase 1 - Camera batch (touch `camera_tab.py` + `config.py` once)
+### Phase 1 - Camera batch
 
-- [ ] Visual ROI picker — click-drag a rectangle on the preview.
-- [ ] Live rectangle overlay drawn from the ROI (already partly there).
-- [ ] Save ROI to `config.json` on change.
-- [ ] "Calibrate" button — average 30 frames of a static colour, store
+- [ ] **`camera_tab.py`** - resolution list: add user's real max
+      (2560x1440), rename the label from "Resolution" to "Capture size",
+      add more entries.
+- [ ] **`camera_tab.py`** - FPS: verify the value actually changes the
+      capture rate. If not, try a different OpenCV backend
+      (`CAP_DSHOW` vs `CAP_MSMF`).
+- [ ] **`camera_tab.py`** - exposure lock: the reported `1/2 s` is wrong.
+      Log the actual `CAP_PROP_EXPOSURE` readback and show the real
+      value. If the driver refused the lock, say so — do not print
+      "locked" when it isn't.
+- [ ] **`camera_tab.py`** - WB lock: same. Report honestly.
+- [ ] **`config.py`** - save / load ROI (region of interest) once the
+      visual picker is added.
+- [ ] Visual ROI picker - click-drag a rectangle on the preview.
+- [ ] Live rectangle overlay drawn from the ROI.
+- [ ] "Calibrate" button - average 30 frames of a static colour, store
       the baseline.
 - [ ] Re-test the camera with the new ROI before moving on.
 
-### Phase 2 - Small UI wins (touch `main_window.py` once)
+### Phase 2 - Light theme fix
+
+- [ ] **`theme.py`** / **`camera_tab.py`** - light mode camera tab
+      borders must reflect open / closed state the same way dark mode
+      does. Currently wrong.
+
+### Phase 3 - Music tab cleanup
+
+- [ ] **`music_tab.py`** - split the pattern list correctly:
+  - 5 music sources (1 any-mic + 4 with built-in mic).
+  - Separate section for software-pattern sources.
+- [ ] **`music_tab.py`** - per-pattern source combo: fix which list is
+      shown for which pattern (user will supply screenshots).
+- [ ] **`music_tab.py`** - pressing Esc during a pattern should also
+      send a stable neutral colour, not leave the strip on the last
+      frame.
+- [ ] Re-test the whole tab after these fixes.
+
+### Phase 4 - Small UI wins
 
 - [ ] Full About dialog with `CREDITS.md` content and GitHub link
       (currently a plain text box).
@@ -249,14 +269,15 @@ opened once. Do them top to bottom.
       `paths.icon_file()`.
 - [ ] Any remaining menu polish in dark mode.
 
-### Phase 3 - Profile import / export (touch `db.py`, then `remote_tab.py`)
+### Phase 5 - Profile import / export
 
-- [ ] Export a profile to a JSON file.
-- [ ] Import a profile; handle name collisions (rename, skip, or
-      overwrite).
+- [ ] **`db.py`** - export a profile to a JSON file.
+- [ ] **`db.py`** - import a profile; handle name collisions (rename,
+      skip, or overwrite).
+- [ ] **`remote_tab.py`** - wire the UI for import / export.
 - [ ] Round-trip test: export, delete, import, confirm buttons intact.
 
-### Phase 4 - 150-LED preview (decide data source first)
+### Phase 6 - 150-LED preview
 
 - [ ] **Decide the data source before writing code.** The protocol sends
       one colour per frame — there is no per-LED data yet. Options:
@@ -266,23 +287,13 @@ opened once. Do them top to bottom.
 - [ ] Then touch whichever tab drives it (`remote_tab.py` or a new
       preview control in Options).
 
-### Phase 5 - Music & Media (touch `music_tab.py` once)
-
-Small fixes first, before the big feature:
-
-- [ ] Confirm microphone path works on your PC (testing only).
-- [ ] Confirm WASAPI loopback fallback works on your PC (testing only).
-- [ ] Confirm "playing file" source works (testing only).
-- [ ] Add duplicate-colour suppression.
-- [ ] Add "ensure on" before starting a music pattern.
-
-Then the big feature (its own session):
+### Phase 7 - Music & Media big feature
 
 - [ ] Retro Winamp-style visualizer.
 - [ ] Video file playback.
 - [ ] MPC + K-Lite integration.
 
-### Phase 6 - Final test sweep
+### Phase 8 - Final test sweep
 
 - [ ] Run the hidden lab on **one** strip only first, then all three.
 - [ ] Confirm no Scroll / M1 corruption after a lab session.
@@ -290,7 +301,7 @@ Then the big feature (its own session):
       `inter_device_delay_ms = 60`.
 - [ ] Smoke test every tab in both themes one more time.
 
-### Phase 7 - Packaging (always last)
+### Phase 9 - Packaging (always last)
 
 - [ ] Rebuild the EXE from the package.
 - [ ] Test on a clean Windows machine.
@@ -299,10 +310,10 @@ Then the big feature (its own session):
 
 ---
 
-## D. Housekeeping - optional
+## C. Housekeeping - optional
 
 - [ ] Delete leftover junk from the project root: `test.txt`,
-      `events.csv`, `events.json`, `build/`. The hand-off tool ignores
+      `events.csv`, `events.json`, `build\`. The hand-off tool ignores
       them, but they add clutter.
 - [ ] Decide whether to keep `AI_CONTEXT.md`, `AI_NOTES.md`,
       `AI_SESSIONS.md`, `AI_BRIEF.md`, `AI_BACKLOG.md`, `PROJECT.md`,
@@ -313,7 +324,7 @@ Then the big feature (its own session):
 
 ---
 
-## E. Compile pass command block
+## D. Compile pass command block
 
 Paste this whole block into PowerShell from the project root. No output
 on any line = all clean.
@@ -344,3 +355,4 @@ python -m py_compile .\aymashtain\ui\tabs\console_tab.py
 python -m py_compile .\aymashtain\ui\tabs\lab_tab.py
 python -m py_compile .\aymashtain\ui\tabs\events_tab.py
 python -m py_compile .\aymashtain\ui\tabs\options_tab.py
+```

@@ -8,19 +8,23 @@ Update it after every session.
 ## Session 1 — Sync pack correction
 
 ### User request
+
 - Confirm which project folder is the real one.
 - Rewrite `00`–`06` of the `AI_SYNC_PACK` to match the real project.
 
 ### Decision made
+
 Real project folder:
 
 ```text
 D:\Coding projects\aymashtain-led-remote-Source
 ```
 
-This is a **package** project (Devin AI rewrite), not the flat `main.py` version.
+This is a **package** project (Devin AI rewrite), not the flat `main.py`
+version.
 
 ### What this chat did
+
 - Confirmed from screenshots that the package app runs.
 - Confirmed 3/3 strips connect, 54 frames sent, 0 failed.
 - Rewrote `00`–`06` for the package structure.
@@ -30,9 +34,11 @@ This is a **package** project (Devin AI rewrite), not the flat `main.py` version
 ## Session 2 — Hidden-feature laboratory
 
 ### User request
+
 - Add a hidden-feature laboratory to the app.
 
 ### What this chat did
+
 - Replaced `aymashtain/ui/tabs/lab_tab.py` with a version that adds:
   - Template generator (`XX` sweep)
   - Candidate list (one hex per line)
@@ -53,6 +59,7 @@ This is a **package** project (Devin AI rewrite), not the flat `main.py` version
 ## Session 3 — Test round
 
 ### What was tested
+
 - Compile: silent, pass.
 - App launches, 8 tabs present.
 - 3/3 strips connected.
@@ -63,6 +70,7 @@ This is a **package** project (Devin AI rewrite), not the flat `main.py` version
 - Lab tab present and functional.
 
 ### What was found broken or rough
+
 - Dark mode highlights too bright.
 - Remote tab "white" colour renders wrong.
 - Some menus broken in dark mode (not all).
@@ -85,12 +93,14 @@ This is a **package** project (Devin AI rewrite), not the flat `main.py` version
 ## Session 4 — Round 2 spec (v0.61 Alpha)
 
 ### Decision
+
 - Next version: **v0.61 Alpha**.
 - The full Round 2 Feature Spec was written for a new chat session.
 - The user will run the next update round in a fresh chat, using the
   `AI_SYNC_PACK` and the spec, to test whether the auto-update method works.
 
 ### Round 2 spec covers
+
 1. New **Options** tab (save location, theme, developer toggle, language
    stub, brightness min/max, audio devices, camera device/resolution/FPS/
    exposure lock/WB lock, window geometry memory).
@@ -113,6 +123,7 @@ This is a **package** project (Devin AI rewrite), not the flat `main.py` version
 14. Version -> v0.61 Alpha.
 
 ### Priority order
+
 1. Options tab.
 2. View menu + developer lock.
 3. Dark mode + menu fixes.
@@ -128,31 +139,6 @@ This is a **package** project (Devin AI rewrite), not the flat `main.py` version
 
 ---
 
-## Files to upload to the next AI chat
-
-- `aymashtain\` folder (whole)
-- `main.py`
-- `requirements.txt`
-- `pyproject.toml`
-- `AI_SYNC_PACK\` folder (00–07)
-- The `02_UNIVERSAL_AI_PROMPT.md` prompt
-- The Round 2 Feature Spec (from Session 4 above)
-
----
-
-## Important note
-
-Update this file after every AI session. Add:
-
-- Date
-- AI name
-- What was asked
-- What changed
-- Files replaced
-- What still needs testing
-
----
-
 ## Session 5 — Round 2 implementation (v0.61 Alpha)
 
 **Date:** 2026-09-21
@@ -160,7 +146,9 @@ Update this file after every AI session. Add:
 **Version target:** v0.61 Alpha
 
 ### User request
-Implement the Round 2 Feature Spec, one file at a time, full replacements only.
+
+Implement the Round 2 Feature Spec, one file at a time, full replacements
+only.
 
 ### Files replaced in this session
 
@@ -169,46 +157,34 @@ Implement the Round 2 Feature Spec, one file at a time, full replacements only.
 2. `aymashtain/config.py` — full rewrite. Added `theme_mode`
    (light/dark/system), `developer_tools` lock, `save_location`,
    `brightness_min`/`brightness_max` + `clamp_brightness()`, audio device
-   slots (`audio_mic_device`, `audio_second_mic_device`,
-   `audio_speaker_device`), camera slots (`camera_resolution`,
-   `camera_fps`, `camera_exposure_lock`, `camera_exposure_value`,
-   `camera_wb_lock`), window memory (`window_screen`,
-   `window_x/y/width/height`, `window_scale`, `remember_window`),
-   per-pattern mic sources (`pattern_sources`), language stub.
-   Backwards-compatible load: old `dark_theme` migrates into `theme_mode`.
+   slots, camera slots, window memory, per-pattern mic sources, language
+   stub. Backwards-compatible load: old `dark_theme` migrates into
+   `theme_mode`.
 3. `aymashtain/ui/tabs/options_tab.py` — **NEW FILE**. Full Options tab
    with General / Appearance / Developer / Brightness limits / Audio
-   devices / Camera / Window sections. Emits `developer_tools_changed(bool)`.
+   devices / Camera / Window sections.
 4. `aymashtain/ui/tabs/__init__.py` — now exports `OptionsTab`.
 5. `aymashtain/ui/main_window.py` — full rewrite. Options tab added as
    last tab. New top-level **Options** menu. View menu now has: Dark mode,
    Developer tools, Extract log, Options. Developer lock hides Lab tab via
-   `setTabVisible`. `apply_theme()` reads `settings.resolved_dark()`. Min
-   window 300x300. Window screen/position/size/scale saved on close,
-   restored on same monitor with off-screen clamp. `Extract log` bundles
+   `setTabVisible`. Min window 300x300. Window memory. Extract log bundles
    logs + config + `system_info.txt` into a zip.
-6. `aymashtain/ui/tabs/camera_tab.py` — full rewrite. Light-grey border
-   closed, dark-grey border open. Resolution dropdown (640x480 ->
-   2560x1440). FPS dropdown (15/24/30/60). Real forced exposure lock
-   (tries DirectShow `0.25` then V4L2 `1.0`, reads back to confirm).
-   White-balance lock (`CAP_PROP_AUTO_WB = 0`). Honest driver report
-   line — says "driver refused lock — auto may win" instead of pretending.
+6. `aymashtain/ui/tabs/camera_tab.py` — full rewrite. Border states,
+   resolution + FPS dropdowns, forced exposure lock, WB lock, honest
+   driver report.
 7. `aymashtain/ui/widgets/strip_preview.py` — full rewrite. Grey backing,
-   neon capsules, per-LED glow, off LEDs flat dark grey,
-   `set_led_colors()` for per-LED frames, `set_color()` kept backwards
-   compatible, `set_leds(count)` ready for 150-LED view.
-8. `aymashtain/ui/tabs/music_tab.py` — full rewrite. Mic selection removed
-   (now reads from Options). Per-pattern source combo (USB internal vs
-   3rd-party mic). Controller vs software pattern split. **Play button
-   fixed** — `_play_selected()` reads the highlighted row. Brightness
-   clamped via `settings.clamp_brightness()`. Preview upgraded to neon
-   capsules. Winamp visualizer / video / MPC marked as planned in
-   docstring.
+   neon capsules, per-LED glow, `set_led_colors()`, `set_color()`
+   backwards compatible, `set_leds(count)` for 150-LED view.
+8. `aymashtain/ui/tabs/music_tab.py` — full rewrite. Mic selection moved
+   out, per-pattern source combo, controller vs software pattern split,
+   **Play button fixed**, brightness clamp, neon preview.
 
 ### What was compiled
+
 User confirmed `__init__.py` and `config.py` compile cleanly.
 
 ### What still needs compiling and testing
+
 - `options_tab.py`
 - `tabs/__init__.py`
 - `main_window.py`
@@ -216,21 +192,8 @@ User confirmed `__init__.py` and `config.py` compile cleanly.
 - `strip_preview.py`
 - `music_tab.py`
 
-### What's left to do (next session)
-Remaining Round 2 spec items not yet implemented:
-
-1. **`remote_tab.py`** — brightness clamp through Options; live per-LED
-   indicator; wire to new preview. **DONE — see Session 6.**
-2. **`events.py` / `events_tab.py`** — user-facing "Export log" only;
-   no log path shown.
-3. **`theme.py`** — soften dark-mode highlights; fix Remote "white"
-   colour rendering; audit menus in dark mode.
-4. **`sweep_tab.py`** — apply `settings.clamp_brightness()`.
-5. **`console_tab.py`** — clamp user-supplied brightness frames
-   (optional).
-6. **Final compile pass** on all files and test run.
-
 ### Honest notes on what's best-guess
+
 - Controller music pattern uses `BC 06 02 0B MM 00 55` with `MM` = mode
   1..4. Best guess — verify with Lab tab on real hardware.
 - Camera exposure lock reports what the driver accepted. If the Nuroum V11
@@ -246,6 +209,7 @@ Remaining Round 2 spec items not yet implemented:
 **Version target:** v0.61 Alpha
 
 ### User request
+
 - Add a one-click tool that bundles the whole project into a numbered zip
   so the next hand-off is "double-click, unzip, drop into a new chat".
 - Drop exported `events.csv` / `events.json` from the bundle (junk logs).
@@ -255,111 +219,77 @@ Remaining Round 2 spec items not yet implemented:
 
 1. **NEW `make_handoff.py`** — one-click bundle builder. Creates
    `handoff/handoff_NNN_YYYYMMDD_HHMMSS.zip`. Includes the source tree,
-   `AI_SYNC_PACK/`, and optional `AI_*` context files. Excludes caches,
-   `.db`, logs, exported `events.*`, `test.txt`, and previous bundles.
-   Writes a `HANDOFF_README.txt` at the top of the zip aimed at the next AI.
-2. **NEW `make_handoff.bat`** — double-click wrapper. Prefers `python`,
-   falls back to `py`, opens the `handoff/` folder when done.
-3. **`AI_SYNC_PACK/07_HOW_TO_USE_AI_SYNC.md`** — full rewrite. Now
-   describes the one-click workflow.
-4. **`AI_SYNC_PACK/00_MASTER_SUMMARY.md`** — version -> v0.61; structure
-   updated for the new files (`assets/`, `handoff/`, `make_handoff.*`,
-   `options_tab.py`); "Not built yet" reflects Session 5 completions;
-   new Section 9 documents the hand-off tool.
-5. **`AI_SYNC_PACK/05_DEVELOPER_README.md`** — same version + structure
-   updates; Section 9 now points at the one-click workflow.
-6. **`AI_SYNC_PACK/06_CURRENT_CHAT.md`** — this section.
-7. **`aymashtain/ui/tabs/remote_tab.py`** — brightness clamp via
-   `settings.clamp_brightness()` on every send and preview path; live
-   per-LED preview update on slider drag (BLE write still deferred to
-   `sliderReleased`); colour + brightness kept as two frames through
-   `BleManager.set_color()`; `sync_clamp_notice()` helper for the main
-   window to call when the Options clamp changes.
-
-### What was compiled
-- `make_handoff.py` — compile check requested.
-- `remote_tab.py` — compile check requested.
-
-### What still needs testing
-- `make_handoff.bat` end-to-end: unzip, drag into a new chat, confirm
-  the next AI finds `02_UNIVERSAL_AI_PROMPT.md` on its own.
-- `remote_tab.py` — slider drag updates the preview live; the actual
-  `BC0506` frame only fires on release; no frame is ever sent that
-  exceeds the Options brightness max.
-
-### What's left to do (next session)
-
-From the Round 2 spec, still not implemented:
-
-1. **`events.py` / `events_tab.py`** — user-facing "Export log" only;
-   no log path shown.
-2. **`theme.py`** — soften dark-mode highlights; fix Remote "white"
-   colour rendering; audit menus in dark mode.
-3. **`sweep_tab.py`** — apply `settings.clamp_brightness()`.
-4. **`console_tab.py`** — clamp user-supplied brightness frames
-   (optional).
-5. **Final compile pass** on all files and test run.
-
-### Housekeeping the user chose to skip for now
-- `AI_BRIEF.md`, `AI_BACKLOG.md`, `PROJECT.md`, `AI_SESSIONS.md`,
-  `AI_NOTES.md`, `AI_CONTEXT.md`, `ai_sync.py` **all stay**. The sync
-  pack (00-07) is the primary hand-off surface; `ai_sync.py` still
-  auto-generates `AI_CONTEXT.md` on commit and that file ships with the
-  bundle as a bonus.
-- Leftover files in the project root (`test.txt`, `events.csv`,
-  `events.json`, `build/`) are ignored by the hand-off tool, but the
-  user may still want to delete them for tidiness.
-- `aymashtain.ico` needs to be moved into a new `assets\` folder for
-  `paths.py` to pick it up.
-
-### Suggested next-chat opening line
-> Continue from Session 6. Next file is `aymashtain/events.py` and then
-> `aymashtain/ui/tabs/events_tab.py`. Make "Export log" the only
-> user-facing log option; do not display the log path. Full replacement
-> files only. Do not touch `ble/manager.py`, `protocol/mrstar.py`, or
-> `storage/db.py` schema.
+   `AI_SYNC_PACK/`, and optional `AI_*` context files.
+2. **NEW `make_handoff.bat`** — double-click wrapper.
+3. `AI_SYNC_PACK/07_HOW_TO_USE_AI_SYNC.md` — full rewrite for one-click
+   flow.
+4. `AI_SYNC_PACK/00_MASTER_SUMMARY.md` — v0.61, new structure, hand-off
+   section.
+5. `AI_SYNC_PACK/05_DEVELOPER_README.md` — same updates.
+6. `AI_SYNC_PACK/06_CURRENT_CHAT.md` — Session 6 appended.
+7. `aymashtain/ui/tabs/remote_tab.py` — brightness clamp via
+   `settings.clamp_brightness()`; live per-LED preview update on slider
+   drag; `sync_clamp_notice()` helper.
 
 ---
 
-## Session 8 - Compile pass + blocker fixes (v0.61 Alpha)
+## Session 7 — Remaining Round 2 UI polish (v0.61 Alpha)
 
 **Date:** 2026-09-21
 **AI name:** DeepSeek
 **Version target:** v0.61 Alpha
 
 ### User request
-- Review every file replaced in Sessions 5-7 before the first test run.
+
+- Finish the remaining Round 2 items: Events tab export, theme softening,
+  sweep clamp, console clamp.
+
+### Files replaced in this session
+
+1. `aymashtain/ui/tabs/events_tab.py` — user-facing "Export log..." only.
+   Log path is never shown to the end user. Format picked by file dialog
+   extension. Default filename uses the Options save location.
+2. `aymashtain/ui/theme.py` — dark-mode highlights softened (indigo-800
+   tabs, indigo-700 accent buttons, zinc-300 slider handle). Menu audit:
+   `pressed`, `disabled`, `separator`, `indicator` rules added to both
+   themes. Light theme brought to parity with dark.
+3. `aymashtain/ui/tabs/remote_tab.py` — preset buttons now carry colour as
+   a small icon (`_color_swatch()`) instead of an inline `border-left`
+   stylesheet. Remaining unicode chars swapped for ASCII.
+4. `aymashtain/ui/tabs/sweep_tab.py` — brightness sweep now runs *within*
+   the Options min/max range. Reads `settings.brightness_min` /
+   `brightness_max` fresh on every step. New info line. New
+   `sync_clamp_notice()` public hook.
+5. `aymashtain/ui/tabs/console_tab.py` — any `BC0506` brightness frame
+   typed or pasted in is clamped against the Options min/max before it is
+   queued. "Decode only" shows a preview. New info label +
+   `sync_clamp_notice()` hook.
+6. Sync pack cleanup — `00`, `01`, `03` re-saved clean as UTF-8.
+
+---
+
+## Session 8 — Compile pass + blocker fixes (v0.61 Alpha)
+
+**Date:** 2026-09-21
+**AI name:** DeepSeek
+**Version target:** v0.61 Alpha
+
+### User request
+
+- Review every file replaced in Sessions 5–7 before the first test run.
 - Fix anything that would crash the app on launch.
 - Confirm every package `__init__.py` exports what its callers import.
 
 ### Blockers found and fixed
 
-1. **`aymashtain/ui/tabs/__init__.py`** - `OptionsTab` was missing from
-   the exports. `main_window.py` imports it, so the app crashed at
-   launch with `ImportError: cannot import name 'OptionsTab'`. Fixed by
-   adding `from .options_tab import OptionsTab  # noqa: F401`.
-
-2. **`aymashtain/ui/tabs/music_tab.py`** - `_stop_reacting()` was
-   missing. `main_window.stop_all_activity()` calls it, so pressing Esc
-   or Control -> Stop all activity raised `AttributeError`. Fixed by
-   adding `_stop_reacting()` as a thin alias for `_stop_pattern()`.
-
-### Files verified as correct (no change needed)
-
-- `aymashtain/__init__.py` - version constants intact.
-- `aymashtain/ui/__init__.py` - docstring only.
-- `aymashtain/ui/widgets/__init__.py` - exports `ColorWheel`,
-  `StripPreview`.
-- `aymashtain/protocol/__init__.py` - every symbol imported anywhere in
-  the codebase is re-exported.
-- `aymashtain/audio/__init__.py` - exports `AudioEngine`, `AudioFrame`,
-  `bands_to_rgb`.
-- `aymashtain/vision/__init__.py` - exports `CameraVerifier`, `Sample`,
-  `analyse_region`.
-- `aymashtain/storage/__init__.py` - exports `Database`,
-  `RemoteButton`, `RemoteProfile`.
-- `aymashtain/ble/__init__.py` - exports `BleManager`, `DeviceState`,
-  `ScanResult`.
+1. **`aymashtain/ui/tabs/__init__.py`** — `OptionsTab` was missing from
+   the exports. `main_window.py` imports it, so the app crashed at launch
+   with `ImportError: cannot import name 'OptionsTab'`. Fixed by adding
+   `from .options_tab import OptionsTab  # noqa: F401`.
+2. **`aymashtain/ui/tabs/music_tab.py`** — `_stop_reacting()` was missing.
+   `main_window.stop_all_activity()` calls it, so pressing Esc or
+   Control → Stop all activity raised `AttributeError`. Fixed by adding
+   `_stop_reacting()` as a thin alias for `_stop_pattern()`.
 
 ### Compile pass
 
@@ -369,17 +299,11 @@ Every file passed `python -m py_compile` with no output.
 
 - Phase 0 in Section C of `03_TODO_USER_AND_AI.md`: wire
   `sync_clamp_notice()` so Remote / Sweep / Console refresh their clamp
-  notice when the Options brightness range changes. Non-crashing,
-  deferred to Round 3.
-
-### Next step
-
-Launch the app and run the test checklist in Section B of
-`03_TODO_USER_AND_AI.md`.
+  notice when the Options brightness range changes.
 
 ---
 
-## Session 8 (continued) - Pytest discovery + top-level init fix
+## Session 8 (continued) — Pytest discovery + top-level init fix
 
 **Date:** 2026-09-21
 **AI name:** DeepSeek
@@ -387,17 +311,19 @@ Launch the app and run the test checklist in Section B of
 
 ### What happened
 
-Compile pass was clean, but `python -m pytest -q` failed during
-collection with:
-ModuleNotFoundError: No module named 'aymashtain.camera_tab'
+Compile pass was clean, but `python -m pytest -q` failed during collection
+with:
 
+```text
+ModuleNotFoundError: No module named 'aymashtain.camera_tab'
+```
 
 ### Root cause
 
 `aymashtain/__init__.py` (the top-level package init) had been
-overwritten with the contents of `aymashtain/ui/tabs/__init__.py`.
-That made every import of the `aymashtain` package try to pull in Qt
-tab classes from the wrong path.
+overwritten with the contents of `aymashtain/ui/tabs/__init__.py`. That
+made every import of the `aymashtain` package try to pull in Qt tab
+classes from the wrong path.
 
 ### Fix
 
@@ -416,14 +342,9 @@ imports.
 but semantically wrong. Always run pytest after touching any
 `__init__.py`.
 
-### Next step
-
-Launch the app via `run.bat` and walk Section B of
-`03_TODO_USER_AND_AI.md`.
-
 ---
 
-## Session 9 - Handoff prep
+## Session 9 — Handoff prep
 
 **Date:** 2026-09-21
 **AI name:** DeepSeek
@@ -443,3 +364,172 @@ Launch the app via `run.bat` and walk Section B of
 3. Then Phase 0 from Section C of `03_TODO_USER_AND_AI.md` (clamp-notice
    wiring across Remote / Sweep / Console).
 4. Then Phase 1 (Camera ROI batch).
+
+---
+
+## Session 10 — Live test + sync pack cleanup + flat handoff (v0.61 Alpha)
+
+**Date:** 2026-09-21
+**AI name:** DeepSeek
+**Version target:** v0.61 Alpha
+
+### User request
+
+- Walk Section B of `03_TODO_USER_AND_AI.md` against the live app and
+  report every result.
+- The sync pack markdown files had been damaged in a prior attempt
+  (code fences never closed, headings lost, whole sections missing).
+  Rewrite every file as a full clean replacement in UTF-8.
+- Design a **flat hand-off bundle**: fewer files, zero subfolders inside
+  the ZIP, no duplicate filenames, and `__init__.py` files renamed by
+  parent folder so they can coexist in one folder.
+- Add the flat-handoff task as the top P0 item in the TODO list.
+
+### Live test results
+
+**Passed**
+
+- App launches. 9 tabs with Dev Tools ON, 8 with it OFF.
+- Version string shows `v0.61 Alpha` in title and About.
+- Remote tab: preset colour swatches, live preview on drag, single
+  `BC0506` on release, clamp notice under slider.
+- Sweep: steps stay inside Options range, no collapse.
+- Colour frame `BC0406000003E8000055` passes Console untouched.
+- Events: filters, live search, `.csv` / `.json` export, no path shown.
+- Theme: dark mode readable, menus readable.
+- Options: everything works including window memory restore.
+- Music: Play button, double-click, mic split, controller combos
+  disabled.
+- Emergency stop: Esc + Control menu work on sweep, music, and lab.
+- Session logs: fresh `.log` / `.json` / `.csv`, no overwrites.
+
+**Failed**
+
+- Console clamp silently passes `BC0506040000000055` through when
+  Options max is 60%. Strip forced to max brightness.
+- Console info label never updates when the Options range changes.
+- Console "Decode only" doesn't show the orange clamp preview line.
+- Sweep doesn't pick up mid-run Options range changes.
+- Light-mode camera tab borders still wrong.
+- Camera: resolution list too short, FPS dropdown no effect, exposure
+  reports fake `1/2 s`, WB lock does nothing.
+- Music: the 4 controller modes are mixed with the music source list;
+  Esc during a pattern leaves the strip on the last frame.
+- Remote clamp notice doesn't refresh when Options range changes.
+
+### Sync pack corruption found and fixed this session
+
+1. `00_MASTER_SUMMARY.md` — Section 3 code fence never closed; Sections
+   4–8 lost their `## ` headings; protocol blocks lost their fences.
+2. `01_WORKFLOW.md` — timeline stopped at Session 6; Sessions 7–9
+   missing.
+3. `02_UNIVERSAL_AI_PROMPT.md` — "read in this order" list still pointed
+   at nested paths.
+4. `03_TODO_USER_AND_AI.md` — Section A stopped at Session 6;
+   Section B was still a pre-test checklist; no P0 flat-handoff task.
+5. `04_AI_ERRORS_ONLY.md` — no rules for the live-test clamp failures;
+   no rule for the Session 8 `__init__.py` incident.
+6. `05_DEVELOPER_README.md` — Section 2 code fence never closed;
+   Section 9 described the old nested workflow.
+7. `06_CURRENT_CHAT.md` — Session 7 was missing.
+
+### Flat handoff design
+
+The rewritten `make_handoff.py` merges `AI_SYNC_PACK/00-07` into **3
+files** (`00_PROJECT_MASTER_DOCS.md`, `01_WORKFLOW_AND_TODO.md`,
+`02_CURRENT_CHAT.md`), flattens the source tree using `__` separators,
+and injects `# Original Path:` headers.
+
+---
+
+## Session 11 — Flat handoff refinement + end-of-chat ritual (v0.61 Alpha)
+
+**Date:** 2026-09-21
+**AI name:** DeepSeek
+**Version target:** v0.61 Alpha
+
+### User request
+
+- Refine `make_handoff.py` so the flat bundle stays **well under 35
+  files** — the first version produced 83 files, too many for DeepSeek's
+  50-file cap once the user attaches screenshots.
+- Drop `.gitignore` and any other files AI chats don't accept.
+- Create a reusable **`08_End_Chat.md`** — a prompt the user pastes at
+  the end of any AI session to get the sync pack updated cleanly.
+- Test the flat bundle with a **`--dry-run`** flag before building.
+
+### Files created / replaced
+
+1. **`make_handoff.py`** — rewritten with:
+   - **Explicit allowlist** of 27 source files (no more
+     "bundle everything and exclude").
+   - **Docs merged into 3 files** (`00_PROJECT_MASTER_DOCS.md`,
+     `01_WORKFLOW_AND_TODO.md`, `02_CURRENT_CHAT.md`).
+   - **5 sub-package `__init__.py` files merged** into
+     `_package_init_exports.md`.
+   - **`--dry-run` flag** prints the full file list + count without
+     creating a zip.
+   - Excludes `.gitignore`, `pyproject.toml`, `requirements.txt`,
+     `.spec`, `README.md`, `CREDITS.md`, `LICENSE.txt`, `tests/`,
+     `assets/`, `AI_*` helper files, logs and DBs.
+   - Target: **32 files**. Dry run confirmed.
+
+2. **`make_handoff.bat`** — rewritten:
+   - `cd /d "%~dp0"` sets working directory (fixes silent failure when
+     double-clicked from another folder).
+   - Prefers `python`, falls back to `py`.
+   - Displays error code and pauses on failure.
+   - Opens the `handoff\` folder when done.
+
+3. **`AI_SYNC_PACK/08_End_Chat.md`** — **NEW FILE**. Reusable
+   end-of-chat ritual prompt. Instructs the AI to:
+   - Append a new session section to `06_CURRENT_CHAT.md`.
+   - Tick/move items in `03_TODO_USER_AND_AI.md`.
+   - Add a dated entry to `01_WORKFLOW.md`.
+   - Add new rules to `04_AI_ERRORS_ONLY.md` only if a mistake was made.
+   - Skip the other files unless their trigger conditions apply.
+   - Deliver **one file at a time** (waits for "next").
+   - Print a final summary block.
+   - The file lives only on the user's PC — not merged into the bundle.
+
+### What was compiled
+
+- `make_handoff.py` — passed `python -m py_compile` clean.
+
+### What still needs testing
+
+- Real `make_handoff.bat` run (not `--dry-run`) — confirm the zip is
+  created and looks right when unzipped.
+- Unzip and visually confirm the flat folder layout matches the dry-run
+  list.
+- Then open a fresh AI chat with the flat bundle and paste the
+  next-chat opening line.
+
+### Dry-run result
+
+```text
+Total files: 32
+Under 35-file target: YES
+Under 50-file cap:    YES
+Zero subdirectories:  YES
+Collisions:           none
+Read failures:        none
+```
+
+### What's left to do (next session)
+
+1. Run `make_handoff.bat` for real (creates `handoff_NNN.zip`).
+2. Unzip and inspect.
+3. Open a fresh chat, drop the folder in, paste the opening line.
+4. Round 3 Phase 0 — fix the Console clamp bug in `console_tab.py`,
+   then `sweep_tab.py` mid-run range read, then wire
+   `sync_clamp_notice()` from `main_window.py`.
+
+### Suggested next-chat opening line
+
+> Continue from Session 11. The flat handoff works (32 files, zero
+> subfolders, under 35). Round 3 Phase 0 next: fix the Console clamp bug
+> in `console_tab.py`, then `sweep_tab.py` mid-run range read, then wire
+> `sync_clamp_notice()` from `main_window.py`. Full replacement files
+> only. Do not touch `ble/manager.py`, `protocol/mrstar.py`, or
+> `storage/db.py` schema.
