@@ -1,34 +1,38 @@
 # Universal AI Prompt for AymashTain LED RGB Remote
 
-Copy everything below this line and give it to any AI together with:
+Copy everything below this line and give it to any AI.
 
-- the `AI_SYNC_PACK` folder
-- the current file you want updated
-- the latest conversation/logs
-- the exact task you want done
+**In the new one-click workflow you don't need to attach anything by
+hand** — the hand-off bundle already contains every file listed here.
+Just drag the unzipped bundle folder into the chat and paste the prompt.
 
 ---
 
 ## PROMPT START
 
-You are updating **AymashTain LED RGB Remote v0.51 Alpha**.
+You are updating **AymashTain LED RGB Remote v0.61 Alpha**.
 
-Read these files first:
+You have been handed a complete snapshot of the project. Read these
+files first, in this order:
 
-- `00_MASTER_SUMMARY.md`
-- `01_WORKFLOW.md`
-- `02_UNIVERSAL_AI_PROMPT.md`
-- `03_TODO_USER_AND_AI.md`
-- `04_AI_ERRORS_ONLY.md`
-- `05_DEVELOPER_README.md`
-- `06_CURRENT_CHAT.md`
+1. `HANDOFF_README.txt` (top of the bundle — tells you what's inside)
+2. `AI_SYNC_PACK/02_UNIVERSAL_AI_PROMPT.md` (this file)
+3. `AI_SYNC_PACK/00_MASTER_SUMMARY.md`
+4. `AI_SYNC_PACK/01_WORKFLOW.md`
+5. `AI_SYNC_PACK/03_TODO_USER_AND_AI.md`
+6. `AI_SYNC_PACK/04_AI_ERRORS_ONLY.md`
+7. `AI_SYNC_PACK/05_DEVELOPER_README.md`
+8. `AI_SYNC_PACK/06_CURRENT_CHAT.md` — **read this last** — it records
+   exactly what the previous session did and what comes next.
+9. `AI_SYNC_PACK/07_HOW_TO_USE_AI_SYNC.md` — if you need to understand
+   how the user works.
 
 Project facts:
 
 1. Project folder: `D:\Coding projects\aymashtain-led-remote-Source`
 2. This is a **package** project, not a single `main.py`.
    Real code is in `aymashtain/`.
-   Entry point: `main.py` → `aymashtain.app:main`.
+   Entry point: `main.py` -> `aymashtain.app:main`.
 3. Python is **3.14.7** on Windows 10.
 4. Bleak is **3.0.2**.
 5. NumPy is **2.5.3**.
@@ -56,8 +60,11 @@ Never do these:
 - Never mix MR Star BC commands with Classic 56/CC commands.
 - Never put brightness inside the colour frame.
 - Never use `FFFF` as a white field.
-- Never remove the per-device serialized queue in `aymashtain/ble/manager.py`. It is what keeps colour and brightness in order.
-- Never use `asyncio.create_task()` to fire colour and brightness in parallel.
+- Never remove the per-device serialized queue in
+  `aymashtain/ble/manager.py`. It is what keeps colour and brightness in
+  order.
+- Never use `asyncio.create_task()` to fire colour and brightness in
+  parallel.
 - Never use hardcoded handle 13 or 19. Use the FFF3 UUID.
 - Never claim the app can read actual LED state over BLE.
 - Camera stays local-only. No uploads.
@@ -69,14 +76,21 @@ Never do these:
 - Always run `python -m py_compile .\file.py` after replacement.
 - Do not use `py -3.12`. Use `python`.
 
-Current status:
+Current status (v0.61 Alpha):
 
 - App runs. 3/3 strips connect. 54 frames sent, 0 failed.
 - `BleManager` queue works.
 - Colour/brightness order works.
 - Session logger works.
-- **Not built yet:** hidden-feature laboratory, camera ROI visual calibration, exposure lock, 150-LED preview, profile import/export, About dialog with credits.
-- Version: release is `v0.51 Alpha`; code currently says `1.0.0`. Keep them consistent.
+- Hidden-feature laboratory built.
+- Options tab built (theme, dev lock, brightness clamp, audio, camera,
+  window memory).
+- Neon strip preview built (per-LED capsules + glow).
+- Camera exposure + WB lock built with honest driver reporting.
+- Remote tab: brightness clamp + live per-LED preview built.
+- **Still to do:** `events.py` / `events_tab.py` user-facing "Export
+  log" only; `theme.py` dark-mode softening + menu audit; `sweep_tab.py`
+  brightness clamp; `console_tab.py` clamp; final compile pass.
 
 User style:
 
@@ -85,16 +99,6 @@ User style:
 - Visual, simple, step-by-step.
 - Prefer full file replacement over manual edits.
 - Never ask the user to merge fragments by hand.
-
-Priority order:
-
-1. Hidden-feature laboratory in `aymashtain/ui/tabs/lab_tab.py`.
-2. Camera ROI visual calibration in `aymashtain/ui/tabs/camera_tab.py`.
-3. Camera exposure / white balance lock.
-4. 150-LED horizontal preview in `aymashtain/ui/widgets/strip_preview.py`.
-5. About dialog with credits.
-6. Profile import / export.
-7. Final packaging.
 
 When asked to update a file:
 

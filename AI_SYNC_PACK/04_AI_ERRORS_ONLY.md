@@ -2,15 +2,21 @@
 
 This file is for AI assistants. Do not show it to normal users.
 
+**Version:** v0.61 Alpha
+
 ---
 
 ## Project structure errors
 
-1. Do not treat this as a single-file `main.py` project. It is a package under `aymashtain/`.
-2. Do not replace the package with a flat `main.py`. The package is better and already works.
+1. Do not treat this as a single-file `main.py` project. It is a package
+   under `aymashtain/`.
+2. Do not replace the package with a flat `main.py`. The package is
+   better and already works.
 3. Do not add new top-level scripts. Keep code inside `aymashtain/`.
-4. Do not delete `aymashtain/ble/manager.py`. The serialized queue lives there.
-5. Do not remove `BleManager.set_color()`. It sends colour then brightness in order.
+4. Do not delete `aymashtain/ble/manager.py`. The serialized queue lives
+   there.
+5. Do not remove `BleManager.set_color()`. It sends colour then
+   brightness in order.
 6. Do not remove the `EventBus` / `SessionLogger` flow in `events.py`.
 7. Do not change the SQLite schema without a migration.
 
@@ -23,14 +29,16 @@ This file is for AI assistants. Do not show it to normal users.
 12. Do not treat Scroll data as static colour.
 13. Do not use `BC0401RRGGBB0055` as documented MR Star colour.
 14. Do not use `7E...EF` outside the experimental lab.
-15. Do not guess the white/neutral command. It is not fully verified.
+15. Do not guess the white / neutral command. It is not fully verified.
 
 ## BLE errors
 
 16. Do not use hardcoded handle 13 or 19. Use the FFF3 UUID.
 17. Do not send colour and brightness as separate `create_task()` calls.
 18. Do not bypass the `BleManager` queue.
-19. Do not use `asyncio.gather` across devices in `send_hex_all` — the current code sends sequentially with an inter-device delay on purpose.
+19. Do not use `asyncio.gather` across devices in `send_hex_all` — the
+    current code sends sequentially with an inter-device delay on
+    purpose.
 20. Do not assume BLE write success means the LEDs changed.
 21. Do not claim readback exists. It does not.
 22. Do not use `response=True` by default for these strips.
@@ -40,40 +48,66 @@ This file is for AI assistants. Do not show it to normal users.
 23. Do not overwrite previous session logs.
 24. Do not log only successful sends. Log failures too.
 25. Do not remove the per-device result fields.
+26. Do not show the log file path to the end user in the Events tab.
+    User-facing "Export log" only (Round 2 spec).
 
 ## UI errors
 
-26. Do not claim the strip preview shows real LED state. It shows last-sent colour.
-27. Do not force a large window size.
-28. Do not break the profile / button / macro system.
-29. Do not auto-elevate to administrator.
-30. Do not use LumenForge branding.
-31. Do not claim a feature exists if it does not.
+27. Do not claim the strip preview shows real LED state. It shows
+    last-sent colour.
+28. Do not force a large window size. Minimum is 300x300.
+29. Do not break the profile / button / macro system.
+30. Do not auto-elevate to administrator.
+31. Do not use LumenForge branding.
+32. Do not claim a feature exists if it does not.
+33. Do not send a brightness frame from the Remote tab on every slider
+    tick. Preview updates live; the actual BLE write is deferred to
+    `sliderReleased` so the per-device queue is not flooded.
+34. Do not bypass `settings.clamp_brightness()` when sending or
+    previewing brightness. The Options tab's min/max is the single
+    source of truth.
 
 ## Camera errors
 
-32. Do not upload camera frames.
-33. Do not use cloud processing.
-34. Do not treat `(0.3, 0.35, 0.7, 0.65)` as a final calibration. It is a default.
-35. Do not judge colour without calibration.
-36. Do not assume all three strips are in one camera frame.
+35. Do not upload camera frames.
+36. Do not use cloud processing.
+37. Do not treat `(0.3, 0.35, 0.7, 0.65)` as a final calibration. It is
+    a default.
+38. Do not judge colour without calibration.
+39. Do not assume all three strips are in one camera frame.
+40. Do not claim the exposure lock succeeded if the driver refused it.
+    The status line must say "driver refused lock — auto may win".
 
 ## Audio errors
 
-37. Do not call every input "Microphone".
-38. Do not assume AUX is named AUX.
-39. Do not assume loopback works on every machine.
-40. Do not leave lights off after a song ends.
+41. Do not call every input "Microphone".
+42. Do not assume AUX is named AUX.
+43. Do not assume loopback works on every machine.
+44. Do not leave lights off after a song ends.
 
 ## Workflow errors
 
-41. Do not give many steps back to back.
-42. Do not ask a non-developer to merge fragments by hand.
-43. Do not provide partial patches unless asked.
-44. Do not forget `python -m py_compile`.
-45. Do not use `py -3.12`. The machine has Python 3.14.7.
-46. Do not edit files outside the project folder.
-47. Do not delete logs.
-48. Do not delete the DB without backup.
-49. Do not claim something is done if it is not implemented.
-50. Do not assume the current version is `1.0.0`. Release name is `v0.51 Alpha`.
+45. Do not give many steps back to back.
+46. Do not ask a non-developer to merge fragments by hand.
+47. Do not provide partial patches unless asked.
+48. Do not forget `python -m py_compile`.
+49. Do not use `py -3.12`. The machine has Python 3.14.7.
+50. Do not edit files outside the project folder.
+51. Do not delete logs.
+52. Do not delete the DB without backup.
+53. Do not claim something is done if it is not implemented.
+54. Do not assume the current version is `1.0.0`. Release name is
+    `v0.61 Alpha`, code constant is `0.61.0`.
+
+## Hand-off errors
+
+55. Do not hand-edit `AI_CONTEXT.md`. It is auto-generated by
+    `ai_sync.py`.
+56. Do not put the `.db` file in a hand-off bundle. It holds the user's
+    private profiles and buttons.
+57. Do not put session logs or exported `events.csv` / `events.json` in a
+    hand-off bundle. They are per-run junk.
+58. Do not delete or overwrite old `handoff\*.zip` files. Each run must
+    create a new numbered zip.
+59. Do not refer to yourself as "ChatGPT" or "Current Assistant" in the
+    sync pack. Use your actual model name (`DeepSeek`).

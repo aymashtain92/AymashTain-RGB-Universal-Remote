@@ -1,8 +1,29 @@
-"""Colour control plus the user-editable button remote."""
+"""Colour control plus the user-editable button remote.
+
+Round 2 changes
+---------------
+* Brightness is clamped through ``settings.clamp_brightness()`` before it is
+  previewed or sent. The Options tab's min / max is the single source of
+  truth; nothing on this tab can push a strip above the configured ceiling.
+* The strip preview updates *live* while the brightness slider is dragged.
+  ``sliderReleased`` still sends the real BLE frame, so we do not flood the
+  per-device queue with a frame per mouse-move — but the neon capsules on
+  screen always match the clamped value that is about to be sent.
+* Colour and brightness stay as two separate frames. ``_apply_color`` hands
+  the pair to ``BleManager.set_color()`` which is the only place allowed to
+  decide the send order.
+* Preset buttons now carry their colour as a small icon instead of an
+  inline ``border-left`` stylesheet. The old approach wiped every other
+  button rule (rounded corners, hover, padding) and made "warm white" /
+  "cool white" render as plain grey rectangles with a thin stripe. The
+  icon keeps the theme styling intact and the swatch is honest about the
+  colour.
+"""
 
 from __future__ import annotations
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import QSize, Qt
+from PySide6.QtGui import QColor, QIcon, QPainter, QPixmap
 from PySide6.QtWidgets import (
     QComboBox,
     QDialog,
@@ -25,7 +46,14 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from ...protocol import CMD_OFF, CMD_ON, EFFECTS, encode_brightness, encode_color, encode_effect
+from ...protocol import (
+    CMD_OFF,
+    CMD_ON,
+    EFFECTS,
+    encode_brightness,
+    encode_color,
+    encode_effect,
+)
 from ..context import AppContext
 from ..widgets import ColorWheel, StripPreview
 
@@ -41,6 +69,26 @@ PRESETS = [
     ("Warm white", (255, 190, 120)),
     ("Cool white", (220, 235, 255)),
 ]
+
+
+def _color_swatch(rgb: tuple[int, int, int], size: int = 16) -> QIcon:
+    """Small rounded square of the given colour, used as a button icon.
+
+    Using an icon keeps the button's theme styling intact. Stamping an
+    inline ``border-left`` stylesheet on the button (the old approach)
+    replaced every other rule Qt had for that widget, so the button lost
+    its corners, hover state and padding.
+    """
+    pixmap = QPixmap(size, size)
+    pixmap.fill(Qt.transparent)
+    painter = QPainter(pixmap)
+    painter.setRenderHint(QPainter.Antialiasing, True)
+    painter.setBrush(QColor(*rgb))
+    # A subtle dark edge keeps pale swatches visible on light themes.
+    painter.setPen(QColor(0, 0, 0, 70))
+    painter.drawRoundedRect(0, 0, size - 1, size - 1, 3.0, 3.0)
+    painter.end()
+    return QIcon(pixmap)
 
 
 class ButtonDialog(QDialog):
@@ -68,7 +116,11 @@ class ButtonDialog(QDialog):
         form.addRow(buttons)
 
     def values(self) -> dict:
-        frames = [line.strip() for line in self.edit_frames.toPlainText().splitlines() if line.strip()]
+        frames = [
+            line.strip()
+            for line in self.edit_frames.toPlainText().splitlines()
+            if line.strip()
+        ]
         return {
             "label": self.edit_label.text().strip() or "Button",
             "hex": self.edit_hex.text().strip(),
@@ -108,9 +160,12 @@ class RemoteTab(QWidget):
         wheel_layout.addWidget(self.wheel, stretch=1)
 
         preset_grid = QGridLayout()
+        preset_grid.setHorizontalSpacing(6)
+        preset_grid.setVerticalSpacing(6)
         for index, (name, rgb) in enumerate(PRESETS):
             button = QPushButton(name)
-            button.setStyleSheet(f"border-left: 6px solid rgb{rgb};")
+            button.setIcon(_color_swatch(rgb))
+            button.setIconSize(QSize(16, 16))
             button.clicked.connect(lambda _=False, c=rgb: self._apply_color(*c))
             preset_grid.addWidget(button, index // 5, index % 5)
         wheel_layout.addLayout(preset_grid)
@@ -121,13 +176,22 @@ class RemoteTab(QWidget):
         self.slider = QSlider(Qt.Horizontal)
         self.slider.setRange(0, 100)
         self.slider.setValue(ctx.settings.last_brightness)
+
+        # Live preview while dragging. The actual BLE write is still deferred
+        # to sliderReleased so we never spam the per-device queue.
+        self.slider.valueChanged.connect(self._on_slider_preview)
         self.slider.sliderReleased.connect(self._on_brightness)
+
         self.lbl_brightness = QLabel(f"{self.slider.value()}%")
-        self.slider.valueChanged.connect(lambda v: self.lbl_brightness.setText(f"{v}%"))
+        self.lbl_brightness.setMinimumWidth(48)
         row = QHBoxLayout()
         row.addWidget(self.slider, stretch=1)
         row.addWidget(self.lbl_brightness)
         bright_layout.addLayout(row)
+
+        self.lbl_clamp = QLabel("")
+        self.lbl_clamp.setWordWrap(True)
+        bright_layout.addWidget(self.lbl_clamp)
         left.addWidget(bright_box)
 
         effects_box = QGroupBox("Effects")
@@ -144,7 +208,14 @@ class RemoteTab(QWidget):
         left.addWidget(effects_box)
 
         self.preview = StripPreview()
-        self.preview.set_color(*self.rgb, brightness=self.slider.value() / 100.0)
+        initial_brightness = self.ctx.settings.clamp_brightness(
+            self.slider.value() / 100.0
+        )
+        self.preview.set_color(
+            *self.rgb,
+            brightness=initial_brightness,
+            label=f"rgb{tuple(self.rgb)}",
+        )
         left.addWidget(self.preview)
 
         layout.addLayout(left, stretch=3)
@@ -154,7 +225,11 @@ class RemoteTab(QWidget):
         profile_row = QHBoxLayout()
         self.combo_profile = QComboBox()
         self.combo_profile.currentIndexChanged.connect(lambda _: self.refresh_buttons())
-        for label, slot in (("New", self._new_profile), ("Rename", self._rename_profile), ("Delete", self._delete_profile)):
+        for label, slot in (
+            ("New", self._new_profile),
+            ("Rename", self._rename_profile),
+            ("Delete", self._delete_profile),
+        ):
             button = QPushButton(label)
             button.clicked.connect(slot)
             profile_row.addWidget(button)
@@ -174,8 +249,25 @@ class RemoteTab(QWidget):
         layout.addLayout(right, stretch=2)
 
         self.refresh_profiles()
+        self._refresh_clamp_notice()
+        self._on_slider_preview(self.slider.value())
 
     # --- colour -----------------------------------------------------------
+
+    def _clamped_brightness(self, slider_value: int | None = None) -> float:
+        """Slider 0..100 -> 0..1, clamped against the Options min/max."""
+        raw = (self.slider.value() if slider_value is None else slider_value) / 100.0
+        return self.ctx.settings.clamp_brightness(raw)
+
+    def _refresh_clamp_notice(self) -> None:
+        lo = self.ctx.settings.brightness_min
+        hi = self.ctx.settings.brightness_max
+        if lo <= 0 and hi >= 100:
+            self.lbl_clamp.setText("")
+        else:
+            self.lbl_clamp.setText(
+                f"Clamped to {lo}%-{hi}% by the Options tab."
+            )
 
     def _on_wheel(self, r: int, g: int, b: int) -> None:
         self._apply_color(r, g, b)
@@ -183,17 +275,29 @@ class RemoteTab(QWidget):
     def _apply_color(self, r: int, g: int, b: int) -> None:
         self.rgb = (r, g, b)
         self.ctx.settings.last_color = [r, g, b]
-        brightness = self.slider.value() / 100.0
+        brightness = self._clamped_brightness()
         self.wheel.set_rgb(r, g, b)
         self.preview.set_color(r, g, b, brightness, f"rgb({r},{g},{b})")
         self.ctx.db.add_command(encode_color(r, g, b), label="color")
+        # Colour and brightness go through set_color() which always sends
+        # two frames in that order - never merged.
         self.ctx.run(self.ctx.ble.set_color(r, g, b, brightness))
+
+    def _on_slider_preview(self, value: int) -> None:
+        """Live update while dragging - preview only, no BLE traffic."""
+        self.lbl_brightness.setText(f"{value}%")
+        r, g, b = self.rgb
+        clamped = self._clamped_brightness(value)
+        self.preview.set_color(r, g, b, clamped, f"rgb({r},{g},{b})")
 
     def _on_brightness(self) -> None:
         value = self.slider.value()
         self.ctx.settings.last_brightness = value
-        self.preview.set_color(*self.rgb, brightness=value / 100.0)
-        self._send(encode_brightness(value / 100.0), "brightness")
+        clamped = self._clamped_brightness(value)
+        r, g, b = self.rgb
+        self.preview.set_color(r, g, b, clamped, f"rgb({r},{g},{b})")
+        # Brightness is a standalone BC0506 frame - never packed with colour.
+        self._send(encode_brightness(clamped), "brightness")
 
     def _send(self, hex_cmd: str, label: str) -> None:
         self.ctx.db.add_command(hex_cmd, label=label)
@@ -238,7 +342,9 @@ class RemoteTab(QWidget):
         if profile_id is None or self.combo_profile.count() <= 1:
             return
         confirm = QMessageBox.question(
-            self, "Delete profile", f"Delete '{self.combo_profile.currentText()}' and its buttons?"
+            self,
+            "Delete profile",
+            f"Delete '{self.combo_profile.currentText()}' and its buttons?",
         )
         if confirm == QMessageBox.Yes:
             self.ctx.db.delete_profile(profile_id)
@@ -263,8 +369,12 @@ class RemoteTab(QWidget):
             box = QGroupBox(group_name)
             grid = QGridLayout(box)
             for index, button in enumerate(buttons):
-                widget = QPushButton(button.label + (" ▶" if button.is_macro else ""))
-                widget.setToolTip(button.hex if not button.is_macro else f"{len(button.macro_frames)} frames")
+                widget = QPushButton(button.label + (" >" if button.is_macro else ""))
+                widget.setToolTip(
+                    button.hex
+                    if not button.is_macro
+                    else f"{len(button.macro_frames)} frames"
+                )
                 widget.clicked.connect(lambda _=False, b=button: self._fire(b))
                 widget.setContextMenuPolicy(Qt.CustomContextMenu)
                 widget.customContextMenuRequested.connect(
@@ -277,7 +387,10 @@ class RemoteTab(QWidget):
 
     def _fire(self, button) -> None:
         if button.is_macro:
-            self.ctx.log("send", f"Macro '{button.label}' ({len(button.macro_frames)} frames)")
+            self.ctx.log(
+                "send",
+                f"Macro '{button.label}' ({len(button.macro_frames)} frames)",
+            )
             self.ctx.run(
                 self.ctx.ble.run_macro(button.macro_frames, button.macro_delay_ms)
             )
@@ -286,7 +399,7 @@ class RemoteTab(QWidget):
 
     def _context_menu(self, widget: QWidget, pos, button) -> None:
         menu = QMenu(self)
-        action_edit = menu.addAction("Edit…")
+        action_edit = menu.addAction("Edit...")
         action_clone = menu.addAction("Duplicate")
         action_delete = menu.addAction("Delete")
         chosen = menu.exec(widget.mapToGlobal(pos))
@@ -330,6 +443,19 @@ class RemoteTab(QWidget):
             return
         values = dialog.values()
         self.ctx.db.update_button(
-            button.id, values["label"], values["hex"], values["group"], values["frames"], values["delay"]
+            button.id,
+            values["label"],
+            values["hex"],
+            values["group"],
+            values["frames"],
+            values["delay"],
         )
         self.refresh_buttons()
+
+    # --- external helpers -------------------------------------------------
+
+    def sync_clamp_notice(self) -> None:
+        """Called by the main window when Options changes the brightness clamp."""
+        self._refresh_clamp_notice()
+        # Re-render the preview with the new clamp applied.
+        self._on_slider_preview(self.slider.value())

@@ -1,4 +1,17 @@
-"""Automated parameter sweeps, optionally verified with the camera."""
+"""Automated parameter sweeps, optionally verified with the camera.
+
+Round 2 changes
+---------------
+* Brightness sweeps now run *within* the Options min/max range instead of
+  sweeping 0..1 and getting clamped step by step. If Options says
+  20%-80% and the user asked for 12 steps, they get twelve evenly-spaced
+  points between 20% and 80%. Every step is useful; none are wasted on
+  values that the clamp would collapse to the same output.
+* The min / max is read fresh from ``settings`` on every step, so if the
+  user changes Options mid-run the sweep follows.
+* A small info label under the config tells the user why the range is
+  what it is.
+"""
 
 from __future__ import annotations
 
@@ -21,11 +34,17 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from ...protocol import EFFECTS, encode_brightness, encode_color_hs, encode_effect, hs_to_rgb
+from ...protocol import (
+    EFFECTS,
+    encode_brightness,
+    encode_color_hs,
+    encode_effect,
+    hs_to_rgb,
+)
 from ..context import AppContext
 
 MODES = {
-    "Hue (0-359°)": "hue",
+    "Hue (0-359 deg)": "hue",
     "Saturation (0-100%)": "saturation",
     "Brightness (0-100%)": "brightness",
     "Effect bytes": "effect",
@@ -41,29 +60,41 @@ class SweepTab(QWidget):
 
         layout = QVBoxLayout(self)
 
+        # --- configuration ------------------------------------------------
         config = QGroupBox("Sweep configuration")
         form = QFormLayout(config)
         self.combo_mode = QComboBox()
         self.combo_mode.addItems(MODES.keys())
+        self.combo_mode.currentIndexChanged.connect(self._refresh_brightness_note)
+        form.addRow("Sweep", self.combo_mode)
+
         self.spin_steps = QSpinBox()
         self.spin_steps.setRange(2, 360)
         self.spin_steps.setValue(ctx.settings.sweep_steps)
+        form.addRow("Steps", self.spin_steps)
+
         self.spin_gap = QSpinBox()
         self.spin_gap.setRange(50, 5000)
         self.spin_gap.setValue(ctx.settings.sweep_step_ms)
         self.spin_gap.setSuffix(" ms")
+        form.addRow("Gap between steps", self.spin_gap)
+
         self.spin_settle = QSpinBox()
         self.spin_settle.setRange(0, 3000)
         self.spin_settle.setValue(ctx.settings.sweep_settle_ms)
         self.spin_settle.setSuffix(" ms")
-        self.chk_verify = QCheckBox("Verify each step with the camera")
-        form.addRow("Sweep", self.combo_mode)
-        form.addRow("Steps", self.spin_steps)
-        form.addRow("Gap between steps", self.spin_gap)
         form.addRow("Settle before sampling", self.spin_settle)
+
+        self.chk_verify = QCheckBox("Verify each step with the camera")
         form.addRow("", self.chk_verify)
+
+        self.lbl_brightness_note = QLabel("")
+        self.lbl_brightness_note.setWordWrap(True)
+        form.addRow("", self.lbl_brightness_note)
+
         layout.addWidget(config)
 
+        # --- actions ------------------------------------------------------
         actions = QHBoxLayout()
         self.btn_start = QPushButton("Start sweep")
         self.btn_start.setProperty("accent", True)
@@ -93,7 +124,29 @@ class SweepTab(QWidget):
         self.lbl_summary = QLabel("Idle.")
         layout.addWidget(self.lbl_summary)
 
-    # --- run --------------------------------------------------------------
+        self._refresh_brightness_note()
+
+    # ------------------------------------------------------------------
+    # Info line
+    # ------------------------------------------------------------------
+
+    def _refresh_brightness_note(self) -> None:
+        """Tell the user the range the brightness sweep will use."""
+        if MODES.get(self.combo_mode.currentText()) != "brightness":
+            self.lbl_brightness_note.setText("")
+            return
+        lo = self.ctx.settings.brightness_min
+        hi = self.ctx.settings.brightness_max
+        if hi < lo:
+            lo, hi = hi, lo
+        self.lbl_brightness_note.setText(
+            f"Brightness sweep will run from {lo}% to {hi}%. "
+            f"Change the range in the Options tab."
+        )
+
+    # ------------------------------------------------------------------
+    # Run
+    # ------------------------------------------------------------------
 
     def _start(self) -> None:
         if self._running:
@@ -139,31 +192,55 @@ class SweepTab(QWidget):
 
                 self._add_row(index + 1, value, frame, sent, measured, white)
                 self.progress.setValue(index + 1)
-                self.ctx.log("sweep", f"[{index + 1}/{steps}] {frame} → {sent} device(s)")
+                self.ctx.log("sweep", f"[{index + 1}/{steps}] {frame} -> {sent} device(s)")
                 await asyncio.sleep(gap)
         finally:
             self._running = False
             self.btn_start.setEnabled(True)
             self.btn_stop.setEnabled(False)
             self.lbl_summary.setText(
-                f"Finished {self.progress.value()}/{steps} steps, {failures} step(s) reached no device."
+                f"Finished {self.progress.value()}/{steps} steps, "
+                f"{failures} step(s) reached no device."
             )
 
-    def _frame_for(self, mode: str, index: int, steps: int) -> tuple[str, str, tuple[int, int, int] | None]:
+    def _frame_for(
+        self, mode: str, index: int, steps: int
+    ) -> tuple[str, str, tuple[int, int, int] | None]:
         if mode == "hue":
             hue = int(index * 360 / steps)
-            return f"{hue}°", encode_color_hs(hue, 1.0), hs_to_rgb(hue, 1.0)
+            return f"{hue} deg", encode_color_hs(hue, 1.0), hs_to_rgb(hue, 1.0)
+
         if mode == "saturation":
             saturation = index / max(1, steps - 1)
-            return f"{saturation:.0%}", encode_color_hs(0, saturation), hs_to_rgb(0, saturation)
+            return (
+                f"{saturation:.0%}",
+                encode_color_hs(0, saturation),
+                hs_to_rgb(0, saturation),
+            )
+
         if mode == "brightness":
-            level = index / max(1, steps - 1)
+            # Sweep *within* the Options min/max, not 0..1 then clamp.
+            # Read the current settings on every step so a change made
+            # during the sweep is picked up.
+            lo = self.ctx.settings.brightness_min / 100.0
+            hi = self.ctx.settings.brightness_max / 100.0
+            if hi < lo:
+                lo, hi = hi, lo
+            t = index / max(1, steps - 1)
+            level = lo + (hi - lo) * t
+            # Belt-and-braces clamp in case min/max were updated between
+            # the read above and the encode below.
+            level = self.ctx.settings.clamp_brightness(level)
             return f"{level:.0%}", encode_brightness(level), None
+
+        # Effect bytes
         codes = list(EFFECTS)
         code = codes[index % len(codes)]
         return f"0x{code} {EFFECTS[code]}", encode_effect(code), None
 
-    def _add_row(self, number: int, value: str, frame: str, sent: int, measured: str, white: str) -> None:
+    def _add_row(
+        self, number: int, value: str, frame: str, sent: int, measured: str, white: str
+    ) -> None:
         row = self.table.rowCount()
         self.table.insertRow(row)
         for column, text in enumerate(
@@ -184,3 +261,11 @@ class SweepTab(QWidget):
             lines.append(",".join(cell.replace(",", ";") for cell in cells))
         QApplication.clipboard().setText("\n".join(lines))
         self.lbl_summary.setText("Results copied to clipboard as CSV.")
+
+    # ------------------------------------------------------------------
+    # External hooks
+    # ------------------------------------------------------------------
+
+    def sync_clamp_notice(self) -> None:
+        """Called by the main window when Options changes the range."""
+        self._refresh_brightness_note()

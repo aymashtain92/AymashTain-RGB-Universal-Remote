@@ -1,9 +1,9 @@
 # AymashTain LED RGB Remote — Developer README
 
-**Version:** v0.51 Alpha  
-**Project path:** `D:\Coding projects\aymashtain-led-remote-Source`  
-**Contact:** ayman.attia.ab@gmail.com  
-**GitHub:** https://github.com/aymashtain92  
+**Version:** v0.61 Alpha
+**Project path:** `D:\Coding projects\aymashtain-led-remote-Source`
+**Contact:** ayman.attia.ab@gmail.com
+**GitHub:** https://github.com/aymashtain92
 **Repo:** https://github.com/aymashtain92/AymashTain-RGB-Universal-Remote
 
 ---
@@ -29,29 +29,33 @@ Known strips:
 ## 2. Structure
 
 ```text
-main.py                      → aymashtain.app:main
+main.py                      -> aymashtain.app:main
 aymashtain/
   app.py                     bootstrap + qasync loop
   config.py                  Settings (JSON)
   events.py                  EventBus + SessionLogger
-  paths.py                   data_dir, logs_dir, db_path
+  paths.py                   data_dir, logs_dir, db_path, icon_file
   ble/manager.py             BleManager (serialized per-device queue)
   protocol/mrstar.py         encode/decode, SCROLL_MACRO
   storage/db.py              profiles, buttons, history, devices
   vision/camera.py           CameraVerifier, Sample
   audio/engine.py            AudioEngine
-  ui/main_window.py          MainWindow, menus, heartbeat
+  ui/main_window.py          MainWindow, menus, heartbeat, window memory
   ui/theme.py                dark / light
   ui/context.py              AppContext
-  ui/widgets/                color_wheel, strip_preview
-  ui/tabs/                   8 tabs
+  ui/widgets/                color_wheel, strip_preview (neon)
+  ui/tabs/                   9 tabs (incl. options_tab)
 tests/                       pytest suite
 AymashTain LED Remote.spec   PyInstaller spec
+assets/aymashtain.ico        App icon
 build_exe.bat, run.bat, repair.ps1, session.bat
-ai_sync.py, update_github.bat
+session.py, ai_sync.py, update_github.bat
+make_handoff.py              One-click hand-off bundle builder
+make_handoff.bat             Double-click wrapper
+handoff/                     Numbered .zip bundles (created on first run)
 requirements.txt, pyproject.toml
 README.md, CREDITS.md
-AI_SYNC_PACK/
+AI_SYNC_PACK/                Hand-curated sync docs (00-07)
 ```
 
 ---
@@ -142,10 +146,21 @@ Keep the `.exe` and the `_internal` folder together.
 
 ---
 
-## 9. How to use AI updates
+## 9. How to hand off to an AI
 
-See `AI_SYNC_PACK\07_HOW_TO_USE_AI_SYNC.md`.  
-Short version: upload the whole `AI_SYNC_PACK` folder + the file you want changed + the prompt from `02_UNIVERSAL_AI_PROMPT.md` and tell the AI what to do.
+See `AI_SYNC_PACK\07_HOW_TO_USE_AI_SYNC.md`.
+
+Short version:
+
+1. Double-click `make_handoff.bat`.
+2. A numbered zip appears in `handoff\`.
+3. Unzip it anywhere.
+4. Drop the whole unzipped folder into a fresh AI chat.
+5. Paste the prompt from `AI_SYNC_PACK\02_UNIVERSAL_AI_PROMPT.md`.
+6. Tell the AI which file to work on next.
+
+The bundle contains the full source tree, the `AI_SYNC_PACK\`, and a
+top-level `HANDOFF_README.txt` that tells the next AI where to start.
 
 ---
 
@@ -159,16 +174,20 @@ Working:
 - BleManager serialized queue.
 - Colour / brightness separated.
 - Session logger.
+- Hidden-feature laboratory.
+- Options tab (theme, dev lock, brightness clamp, audio, camera, window).
+- Neon strip preview.
+- Camera exposure + WB lock with honest driver reporting.
+- Developer-tools lock.
+- Remote tab: live per-LED preview, brightness clamp.
 
 Not built yet:
 
-- Hidden-feature laboratory.
-- Camera ROI visual calibration.
-- Exposure / white balance lock.
-- 150-LED preview.
+- Camera ROI visual calibration (overlay picker).
+- 150-LED horizontal preview driven by per-LED data.
 - Profile import / export.
-- About dialog with credits.
-- Version reconciliation (`1.0.0` vs `v0.51 Alpha`).
+- Full About dialog.
+- Retro Winamp-style visualizer / video playback.
 
 ---
 
@@ -180,12 +199,13 @@ Not built yet:
 - **Pale colours:** brightness inside colour frame — check `protocol/mrstar.py`.
 - **Camera:** install `opencv-python`, try camera index 0/1/2, calibrate ROI.
 - **Audio:** pick the right device. Look for Line In / AUX / Stereo Mix / VoiceMeeter.
+- **Icon missing:** confirm `assets\aymashtain.ico` exists (paths.py looks there).
 
 ---
 
 ## 12. License
 
-MIT License. See `LICENSE.txt`.  
+MIT License. See `LICENSE.txt`.
 Third-party libraries keep their own licenses. See `CREDITS.md`.
 
 ---
