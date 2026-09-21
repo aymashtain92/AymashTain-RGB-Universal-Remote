@@ -394,6 +394,16 @@ class MusicTab(QWidget):
         for bar in self.bars.values():
             bar.setValue(0)
 
+    def _stop_reacting(self) -> None:
+        """Alias used by MainWindow.stop_all_activity() and the Esc shortcut.
+
+        Kept as a stable public-ish name so the main window never has to
+        reach into a private method. Behaviour matches ``_stop_pattern`` —
+        stop the reactive timer, stop the audio engine, reset the meters,
+        and disable the Stop button.
+        """
+        self._stop_pattern()
+
     # =================================================================
     # Media player
     # =================================================================

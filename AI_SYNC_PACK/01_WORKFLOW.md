@@ -178,7 +178,18 @@ Still pending after Session 6:
 - `sweep_tab.py` - brightness clamp.
 - `console_tab.py` - clamp user-supplied brightness frames (optional).
 - Final compile pass.
+---
 
+## 2026-09-21 - Compile pass + blocker fixes (Session 8)
+
+**DeepSeek**
+- Reviewed every file replaced in Sessions 5-7 before the first test.
+- Fixed `tabs/__init__.py`: `OptionsTab` was missing from the exports.
+- Fixed `music_tab.py`: added `_stop_reacting()` alias so the emergency
+  stop does not crash.
+- Verified all 10 `__init__.py` files export what their callers import.
+- Full compile pass ran clean with no output.
+- Phase 0 clamp-notice wiring deferred to Round 3.
 ---
 
 ## Who did what

@@ -318,3 +318,61 @@ From the Round 2 spec, still not implemented:
 > user-facing log option; do not display the log path. Full replacement
 > files only. Do not touch `ble/manager.py`, `protocol/mrstar.py`, or
 > `storage/db.py` schema.
+
+---
+
+## Session 8 - Compile pass + blocker fixes (v0.61 Alpha)
+
+**Date:** 2026-09-21
+**AI name:** DeepSeek
+**Version target:** v0.61 Alpha
+
+### User request
+- Review every file replaced in Sessions 5-7 before the first test run.
+- Fix anything that would crash the app on launch.
+- Confirm every package `__init__.py` exports what its callers import.
+
+### Blockers found and fixed
+
+1. **`aymashtain/ui/tabs/__init__.py`** - `OptionsTab` was missing from
+   the exports. `main_window.py` imports it, so the app crashed at
+   launch with `ImportError: cannot import name 'OptionsTab'`. Fixed by
+   adding `from .options_tab import OptionsTab  # noqa: F401`.
+
+2. **`aymashtain/ui/tabs/music_tab.py`** - `_stop_reacting()` was
+   missing. `main_window.stop_all_activity()` calls it, so pressing Esc
+   or Control -> Stop all activity raised `AttributeError`. Fixed by
+   adding `_stop_reacting()` as a thin alias for `_stop_pattern()`.
+
+### Files verified as correct (no change needed)
+
+- `aymashtain/__init__.py` - version constants intact.
+- `aymashtain/ui/__init__.py` - docstring only.
+- `aymashtain/ui/widgets/__init__.py` - exports `ColorWheel`,
+  `StripPreview`.
+- `aymashtain/protocol/__init__.py` - every symbol imported anywhere in
+  the codebase is re-exported.
+- `aymashtain/audio/__init__.py` - exports `AudioEngine`, `AudioFrame`,
+  `bands_to_rgb`.
+- `aymashtain/vision/__init__.py` - exports `CameraVerifier`, `Sample`,
+  `analyse_region`.
+- `aymashtain/storage/__init__.py` - exports `Database`,
+  `RemoteButton`, `RemoteProfile`.
+- `aymashtain/ble/__init__.py` - exports `BleManager`, `DeviceState`,
+  `ScanResult`.
+
+### Compile pass
+
+Every file passed `python -m py_compile` with no output.
+
+### Still open
+
+- Phase 0 in Section C of `03_TODO_USER_AND_AI.md`: wire
+  `sync_clamp_notice()` so Remote / Sweep / Console refresh their clamp
+  notice when the Options brightness range changes. Non-crashing,
+  deferred to Round 3.
+
+### Next step
+
+Launch the app and run the test checklist in Section B of
+`03_TODO_USER_AND_AI.md`.
