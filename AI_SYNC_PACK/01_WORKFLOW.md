@@ -192,6 +192,19 @@ Still pending after Session 6:
 - Phase 0 clamp-notice wiring deferred to Round 3.
 ---
 
+## 2026-09-21 - Pytest discovery + handoff prep (Sessions 8 cont. + 9)
+
+**DeepSeek**
+- Ran `python -m pytest -q` for the first time.
+- Discovered `aymashtain/__init__.py` had been overwritten with the
+  contents of `ui/tabs/__init__.py`.
+- Restored `aymashtain/__init__.py` to app-identity constants only.
+- Re-ran pytest: **27 passed**.
+- Prepared handoff bundle for the first live test run.
+- App not yet launched.
+
+----
+
 ## Who did what
 
 | Date | AI / Person | Contribution |

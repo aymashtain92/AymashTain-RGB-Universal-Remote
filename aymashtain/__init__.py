@@ -1,9 +1,11 @@
-from .camera_tab import CameraTab  # noqa: F401
-from .connect_tab import ConnectTab  # noqa: F401
-from .console_tab import ConsoleTab  # noqa: F401
-from .events_tab import EventsTab  # noqa: F401
-from .lab_tab import LabTab  # noqa: F401
-from .music_tab import MusicTab  # noqa: F401
-from .options_tab import OptionsTab  # noqa: F401
-from .remote_tab import RemoteTab  # noqa: F401
-from .sweep_tab import SweepTab  # noqa: F401
+"""AymashTain LED RGB Remote.
+
+Top-level package. Only the app identity constants live here, so that
+every submodule can do ``from . import APP_NAME, APP_VERSION`` without
+pulling in Qt, bleak, OpenCV or any of the heavy dependencies.
+"""
+
+APP_NAME = "AymashTain LED Remote"
+APP_SLUG = "AymashTain"
+APP_VERSION = "0.61.0"
+APP_DISPLAY_VERSION = "v0.61 Alpha"

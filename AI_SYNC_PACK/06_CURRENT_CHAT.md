@@ -376,3 +376,70 @@ Every file passed `python -m py_compile` with no output.
 
 Launch the app and run the test checklist in Section B of
 `03_TODO_USER_AND_AI.md`.
+
+---
+
+## Session 8 (continued) - Pytest discovery + top-level init fix
+
+**Date:** 2026-09-21
+**AI name:** DeepSeek
+**Version target:** v0.61 Alpha
+
+### What happened
+
+Compile pass was clean, but `python -m pytest -q` failed during
+collection with:
+ModuleNotFoundError: No module named 'aymashtain.camera_tab'
+
+
+### Root cause
+
+`aymashtain/__init__.py` (the top-level package init) had been
+overwritten with the contents of `aymashtain/ui/tabs/__init__.py`.
+That made every import of the `aymashtain` package try to pull in Qt
+tab classes from the wrong path.
+
+### Fix
+
+`aymashtain/__init__.py` restored to its correct role: app identity
+constants only. First line is a docstring, then `APP_NAME`, `APP_SLUG`,
+`APP_VERSION = "0.61.0"`, `APP_DISPLAY_VERSION = "v0.61 Alpha"`. No
+imports.
+
+### Result
+
+`python -m pytest -q` → **27 passed in 0.78s**.
+
+### Lesson for future sessions
+
+`py_compile` cannot catch a file whose contents are syntactically valid
+but semantically wrong. Always run pytest after touching any
+`__init__.py`.
+
+### Next step
+
+Launch the app via `run.bat` and walk Section B of
+`03_TODO_USER_AND_AI.md`.
+
+---
+
+## Session 9 - Handoff prep
+
+**Date:** 2026-09-21
+**AI name:** DeepSeek
+**Version target:** v0.61 Alpha
+
+### State at handoff
+
+- All code edits for Round 2 are complete.
+- Compile pass clean.
+- Unit tests: 27 passed.
+- App has NOT yet been launched for the first full test run.
+
+### Next task in the new chat
+
+1. Wait for user to paste the first test-run log.
+2. Fix whatever breaks.
+3. Then Phase 0 from Section C of `03_TODO_USER_AND_AI.md` (clamp-notice
+   wiring across Remote / Sweep / Console).
+4. Then Phase 1 (Camera ROI batch).
