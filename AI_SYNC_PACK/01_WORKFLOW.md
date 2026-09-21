@@ -1,3 +1,5 @@
+<!-- BEGIN FILE: AI_SYNC_PACK/01_WORKFLOW.md -->
+
 # AymashTain LED RGB Remote - Workflow and Timeline
 
 Dates based on timestamps in the provided conversations and logs.
@@ -307,6 +309,75 @@ Still pending after Session 6:
 
 ---
 
+## 2026-09-22 - Round 3 full batch delivered but app does not launch (Session 12)
+
+**User**
+
+- Requested Round 3 in one chat, one file at a time, full replacements.
+- Asked for all five batches: Phase 0 clamp wiring, Phase 1 camera,
+  Phase 2 light theme, Phase 3 music tab, Batch 5 About dialog.
+- Asked for a multi-strip selector so the user can pick which strips
+  receive commands from every tab. Default = "All connected".
+- Asked for **Light modes** in the Remote tab as collapsible dropdowns
+  placed under colour + brightness, before the strip preview. Mirrors
+  the vendor app's "Light Mode" categories: Basic, Opening & closing,
+  Transition, Running water, Tailing, Running.
+- Asked for the Music & Media tab to be music-only. The four
+  "Controller mode" entries move to Remote → Light modes.
+- Asked for a proper About dialog reading `CREDITS.md`.
+- Asked to rename the top-level "Options" menu to "Settings".
+- Asked for camera backend picker (DSHOW / MSMF / auto), honest
+  exposure + WB readback, longer capture-size list, theme-aware preview
+  border.
+- Confirmed at end of session: **the app does not start.**
+
+**DeepSeek**
+
+Ten files delivered, one at a time, full replacements:
+
+1. `aymashtain/ui/context.py` — `selected_strips`, `resolve_targets()`,
+   `selected_strip_count()`, `is_strip_selected()`.
+2. `aymashtain/ui/tabs/console_tab.py` — clamp parses both 18-char and
+   20-char `BC0506` frames; orange preview in "Decode only"; sends via
+   `resolve_targets()`.
+3. `aymashtain/ui/tabs/sweep_tab.py` — fresh range read every step;
+   logs mid-run changes; sends via `resolve_targets()`.
+4. `aymashtain/ui/tabs/options_tab.py` — `brightness_limits_changed`
+   signal; camera backend dropdown; longer capture-size list;
+   "Capture size" rename.
+5. `aymashtain/ui/main_window.py` — `StripSelectorBar`; "Options" menu
+   renamed to "Settings"; `brightness_limits_changed` fanned out to
+   `sync_clamp_notice()`; proper About dialog reading `CREDITS.md`.
+6. `aymashtain/ui/tabs/camera_tab.py` — backend picker
+   (auto/dshow/msmf); honest exposure + WB readback; theme-aware
+   border colours.
+7. `aymashtain/config.py` — `camera_backend` field with validation.
+8. `aymashtain/ui/tabs/music_tab.py` — controller modes removed; Esc
+   sends stable colour; `sync_clamp_notice()` hook added.
+9. `aymashtain/ui/tabs/remote_tab.py` — Light-modes section (6
+   collapsible categories); multi-strip preview rows; per-mode hex
+   override via right-click. Second correction pass added the missing
+   `setProperty("sectionHeader", True)`.
+10. `aymashtain/ui/theme.py` — `sectionHeader="true"` styles in both
+    themes.
+
+**Honest notes from this session**
+
+- **No compile output was shared.** No `py_compile` result, no pytest
+  run. The ten files are "delivered" not "verified".
+- **The app does not launch after the batch.** No error text, no
+  traceback, no log was shared. The failure is undiagnosed.
+- The Light-mode hexes are best-guess: the vendor app's Light Mode
+  opcodes are not in the captured protocol, so every mode is mapped to
+  the closest documented effect byte (`BC 06 02 XX 00 00 55`).
+- Multi-strip selection is stored only in memory (`AppContext.selected_strips`)
+  — not persisted across restarts. Intentional for this round.
+
+**Next session must start by collecting the real failure output before
+touching any code.** See Section A0 of `03_TODO_USER_AND_AI.md`.
+
+---
+
 ## Who did what
 
 | Date | AI / Person | Contribution |
@@ -332,3 +403,6 @@ Still pending after Session 6:
 | 2026-09-21 | DeepSeek | Pytest fix + handoff prep (Session 9) |
 | 2026-09-21 | User + DeepSeek | Live test + sync pack cleanup (Session 10) |
 | 2026-09-21 | User + DeepSeek | Flat handoff refinement + `08_End_Chat.md` (Session 11) |
+| 2026-09-22 | User + DeepSeek | Round 3 batch delivered — app does not launch, undiagnosed (Session 12) |
+
+<!-- END FILE: AI_SYNC_PACK/01_WORKFLOW.md -->

@@ -1,25 +1,33 @@
+# Original Path: aymashtain/ui/tabs/music_tab.py
+
 """Media player plus audio-reactive dancing lights.
 
-Round 2 cleanup
+Round 3 cleanup
 ---------------
-* Microphone *selection* now lives in Options. This tab never lists audio
-  devices anymore — it just uses the indices chosen there.
-* The old source dropdown is gone. Instead there is a **pattern list**, and
-  each pattern carries its own source assignment.
-* Two categories of pattern:
-    - **Controller** patterns — sent once as an effect frame; the strip's
-      own USB mic drives the dance. No PC audio is fed. This is what the
-      vendor app's "music mode" does.
-    - **Software** patterns — the PC keeps sending colour + brightness in a
-      loop, driven by the mic / line-in / speaker loopback / playing file.
-* The Play button now plays the *selected* row. Single click selects, Play
-  starts. Double-click still works as a shortcut.
-* The strip preview uses the new neon-capsule widget.
-* Brightness is clamped through ``settings.clamp_brightness()`` before every
-  frame, so the Options min / max always wins.
+* **Music patterns only.** The four "Controller mode" entries are gone
+  from this tab. Those are hardware effects the strip runs on its own
+  and they now live in the Remote tab's new "Light modes" section.
+  Keeping them here made it look like they were music sources, which
+  they are not.
+* **Neutral colour on stop.** Pressing Stop, hitting Esc, or closing the
+  tab while a reactive pattern is running now sends the Remote tab's
+  current static colour back to the strip. Before, the strip was left
+  frozen on whatever colour the last audio frame happened to hit --
+  usually a muddy purple.
+* **Multi-strip targeting.** Colour frames go through
+  ``ctx.resolve_targets()`` so the strip selector bar in the main
+  window is honoured. The Music tab used to broadcast to every
+  connected strip regardless of the user's selection.
+* **``sync_clamp_notice()``** hook added so the main window can refresh
+  the music tab's clamp notice when the Options range changes.
 
-Planned (not built in this file): Winamp-style frequency visualiser, video
-file playback, MPC + K-Lite integration. Those land in a later phase.
+Round 2 behaviour kept
+----------------------
+* The Play button plays the selected row. Double-click is a shortcut.
+* Mic selection lives in Options. This tab only picks which *pattern*
+  is running, not which device.
+* Strip preview uses the neon-capsule widget.
+* Brightness is clamped through ``settings.clamp_brightness()``.
 """
 
 from __future__ import annotations
@@ -52,19 +60,16 @@ from PySide6.QtWidgets import (
 from ...audio import AudioEngine, bands_to_rgb
 from ...audio.engine import rms_to_brightness
 from ...config import MIC_THIRD_PARTY, MIC_USB_INTERNAL
-from ...protocol import encode_effect
 from ..context import AppContext
 from ..widgets import StripPreview
 
-#: Kind: "controller" → fire one effect frame, then leave the strip alone.
-#: Kind: "software"   → drive colour + brightness from a live audio feed.
-PATTERNS: list[tuple[str, str, str]] = [
-    ("spectrum", "Spectrum", "software"),
-    ("pulse", "Pulse (bass)", "software"),
-    ("ctrl_1", "Controller mode 1", "controller"),
-    ("ctrl_2", "Controller mode 2", "controller"),
-    ("ctrl_3", "Controller mode 3", "controller"),
-    ("ctrl_4", "Controller mode 4", "controller"),
+#: Only music-reactive software patterns live here now. The four
+#: "Controller mode" entries moved to the Remote tab's Light modes
+#: section, which is where the strip runs its own effect.
+#: Format: (key, display name, default source).
+MUSIC_PATTERNS: list[tuple[str, str, str]] = [
+    ("spectrum", "Spectrum", MIC_THIRD_PARTY),
+    ("pulse", "Pulse (bass)", MIC_THIRD_PARTY),
 ]
 
 #: Display order for the per-pattern source combo.
@@ -73,17 +78,11 @@ SOURCE_LABELS: list[tuple[str, str]] = [
     (MIC_USB_INTERNAL, "USB built-in mic (strip drives itself)"),
 ]
 
-#: The strip's native music effect is 0x0B. The four "modes" are mapped onto
-#: the speed byte in ``BC 06 02 0B MM 00 55``. Values are a best guess — if a
-#: mode does nothing, verify with the Lab tab on your hardware.
-CONTROLLER_EFFECT_BYTE = "0B"
-
 
 @dataclass
 class PatternState:
     key: str
     name: str
-    kind: str          # controller | software
     source: str        # MIC_USB_INTERNAL | MIC_THIRD_PARTY
 
 
@@ -118,7 +117,6 @@ class MusicTab(QWidget):
 
         self.list_files = QListWidget()
         self.list_files.setSelectionMode(QAbstractItemView.SingleSelection)
-        # Double-click is a convenience only; the Play button does the real work.
         self.list_files.itemDoubleClicked.connect(self._on_row_double_clicked)
         left.addWidget(self.list_files, stretch=1)
 
@@ -169,32 +167,29 @@ class MusicTab(QWidget):
         layout.addLayout(left, stretch=2)
 
         # =============================================================
-        # Right: patterns + preview + meters
+        # Right: music patterns + preview + meters
         # =============================================================
         right = QVBoxLayout()
 
-        patterns_box = QGroupBox("Patterns")
+        patterns_box = QGroupBox("Music patterns")
         patterns_layout = QVBoxLayout(patterns_box)
 
         info = QLabel(
-            "Pick a source per pattern. Mic devices are chosen in the Options tab. "
-            "Controller patterns send a single effect frame — the strip does its "
-            "own thing from its USB mic. Software patterns drive the lights from "
-            "the PC in real time."
+            "These patterns drive the strip from what the PC hears. "
+            "The source (primary mic, second mic, or the playing file) is "
+            "chosen in Options. Light modes — the ones the strip runs on "
+            "its own USB mic — live in the Remote tab."
         )
         info.setWordWrap(True)
         info.setStyleSheet("color: #71717A;")
         patterns_layout.addWidget(info)
 
-        self.pattern_table = QTableWidget(len(PATTERNS), 4)
-        self.pattern_table.setHorizontalHeaderLabels(
-            ["Pattern", "Source", "Kind", ""]
-        )
+        self.pattern_table = QTableWidget(len(MUSIC_PATTERNS), 3)
+        self.pattern_table.setHorizontalHeaderLabels(["Pattern", "Source", ""])
         header = self.pattern_table.horizontalHeader()
         header.setSectionResizeMode(0, QHeaderView.ResizeToContents)
         header.setSectionResizeMode(1, QHeaderView.Stretch)
         header.setSectionResizeMode(2, QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(3, QHeaderView.ResizeToContents)
         self.pattern_table.verticalHeader().setVisible(False)
         self.pattern_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.pattern_table.setSelectionMode(QAbstractItemView.NoSelection)
@@ -203,38 +198,28 @@ class MusicTab(QWidget):
         self._source_combos: dict[str, QComboBox] = {}
         self._start_buttons: dict[str, QPushButton] = {}
 
-        for row, (key, name, kind) in enumerate(PATTERNS):
+        for row, (key, name, default_source) in enumerate(MUSIC_PATTERNS):
             self.pattern_table.setItem(row, 0, QTableWidgetItem(name))
-            self.pattern_table.setItem(
-                row, 2, QTableWidgetItem("controller" if kind == "controller" else "software")
-            )
 
             combo = QComboBox()
             for value, label in SOURCE_LABELS:
                 combo.addItem(label, value)
-            default = self._default_source_for(kind)
-            saved = ctx.settings.pattern_sources.get(key, default)
+            saved = ctx.settings.pattern_sources.get(key, default_source)
             idx = combo.findData(saved)
             combo.setCurrentIndex(idx if idx >= 0 else 0)
             combo.currentIndexChanged.connect(
                 lambda _=0, k=key, c=combo: self._on_source_changed(k, c)
             )
             self._source_combos[key] = combo
-
-            if kind == "controller":
-                # The strip uses its own mic; PC source is irrelevant.
-                combo.setCurrentIndex(combo.findData(MIC_USB_INTERNAL))
-                combo.setEnabled(False)
-
             self.pattern_table.setCellWidget(row, 1, combo)
 
             btn = QPushButton("Start")
             btn.setProperty("accent", True)
             btn.clicked.connect(
-                lambda _=False, k=key, n=name, kd=kind: self._start_pattern(k, n, kd)
+                lambda _=False, k=key, n=name: self._start_pattern(k, n)
             )
             self._start_buttons[key] = btn
-            self.pattern_table.setCellWidget(row, 3, btn)
+            self.pattern_table.setCellWidget(row, 2, btn)
 
         self.pattern_table.resizeRowsToContents()
         patterns_layout.addWidget(self.pattern_table)
@@ -253,7 +238,7 @@ class MusicTab(QWidget):
 
         right.addWidget(patterns_box)
 
-        # --- gain / rate (software patterns only) --------------------
+        # --- tuning ---------------------------------------------------
         tune_box = QGroupBox("Software pattern tuning")
         tune_layout = QHBoxLayout(tune_box)
         tune_layout.addWidget(QLabel("Update every"))
@@ -285,6 +270,13 @@ class MusicTab(QWidget):
             meters_layout.addLayout(row)
         right.addWidget(meters)
 
+        # --- clamp notice ---------------------------------------------
+        self.lbl_clamp = QLabel("")
+        self.lbl_clamp.setWordWrap(True)
+        self.lbl_clamp.setStyleSheet("color: #71717A;")
+        right.addWidget(self.lbl_clamp)
+        self._refresh_clamp_notice()
+
         # --- preview --------------------------------------------------
         self.preview = StripPreview()
         right.addWidget(self.preview)
@@ -301,12 +293,26 @@ class MusicTab(QWidget):
         layout.addLayout(right, stretch=3)
 
     # =================================================================
-    # Pattern helpers
+    # Clamp notice (for the main window fan-out)
     # =================================================================
 
-    @staticmethod
-    def _default_source_for(kind: str) -> str:
-        return MIC_USB_INTERNAL if kind == "controller" else MIC_THIRD_PARTY
+    def _refresh_clamp_notice(self) -> None:
+        lo = self.ctx.settings.brightness_min
+        hi = self.ctx.settings.brightness_max
+        if lo <= 0 and hi >= 100:
+            self.lbl_clamp.setText("")
+        else:
+            self.lbl_clamp.setText(
+                f"Brightness is clamped to {lo}%-{hi}% by the Options tab."
+            )
+
+    def sync_clamp_notice(self) -> None:
+        """Called by the main window when Options changes the brightness range."""
+        self._refresh_clamp_notice()
+
+    # =================================================================
+    # Pattern helpers
+    # =================================================================
 
     def _on_source_changed(self, key: str, combo: QComboBox) -> None:
         value = combo.currentData()
@@ -314,47 +320,21 @@ class MusicTab(QWidget):
             return
         self.ctx.settings.pattern_sources[key] = value
 
-    def _start_pattern(self, key: str, name: str, kind: str) -> None:
-        self._stop_pattern()
+    def _start_pattern(self, key: str, name: str) -> None:
+        # Stop whatever was running first so we never layer patterns.
+        self._stop_pattern(send_neutral=False)
 
-        source = self._source_combos[key].currentData() or self._default_source_for(kind)
-        state = PatternState(key=key, name=name, kind=kind, source=source)
+        source = self._source_combos[key].currentData() or MIC_THIRD_PARTY
+        state = PatternState(key=key, name=name, source=source)
         self._active_pattern = state
 
-        if kind == "controller":
-            self._start_controller_pattern(state)
-        else:
-            self._start_software_pattern(state)
-
-        self.btn_stop_pattern.setEnabled(True)
-        self.lbl_pattern_state.setText(f"Running: {name} ({kind})")
-
-    def _start_controller_pattern(self, state: PatternState) -> None:
-        # Map the mode index out of the pattern key ("ctrl_3" → 3).
+        # Only third-party sources are useful on the PC side; the USB
+        # internal mic is the strip's own thing and is handled by the
+        # controller patterns (now in Remote). If the user picked USB
+        # here we fall back to the PC mic so something actually runs.
+        device = self._device_for_source(source)
         try:
-            mode = int(state.key.split("_", 1)[1])
-        except (IndexError, ValueError):
-            mode = 1
-        mode = max(1, min(4, mode))
-
-        # BC 06 02 0B MM 00 55 — mode byte in the "speed" slot.
-        frame = encode_effect(CONTROLLER_EFFECT_BYTE, speed=mode)
-        self.ctx.log(
-            "audio",
-            f"Controller pattern '{state.name}': sending {frame} (strip uses its USB mic)",
-        )
-        self.ctx.run(self.ctx.ble.send_hex_all(frame, label=f"music:{state.key}"))
-
-    def _start_software_pattern(self, state: PatternState) -> None:
-        device = self._device_for_source(state.source)
-
-        try:
-            if state.source == MIC_THIRD_PARTY:
-                # Prefer the primary mic chosen in Options.
-                self.engine.start_microphone(device if device is not None and device >= 0 else None)
-            else:
-                # USB internal is a controller concept; software shouldn't need it.
-                self.engine.start_microphone(device if device is not None and device >= 0 else None)
+            self.engine.start_microphone(device if device >= 0 else None)
         except Exception as exc:
             self.lbl_state.setText(str(exc))
             self.ctx.log("error", f"Audio start failed: {exc}")
@@ -364,25 +344,22 @@ class MusicTab(QWidget):
             return
 
         self._timer.start(self.spin_rate.value())
-        self.ctx.log(
-            "audio",
-            f"Software pattern '{state.name}' started from {state.source}",
-        )
+        self.btn_stop_pattern.setEnabled(True)
+        self.lbl_pattern_state.setText(f"Running: {name}")
+        self.ctx.log("audio", f"Music pattern '{name}' started from {source}")
 
     def _device_for_source(self, source: str) -> int:
-        """Pick a device index based on the source kind and Options settings."""
         settings = self.ctx.settings
         if source == MIC_USB_INTERNAL:
-            # Not a PC device; caller falls back to default mic if used.
             return -1
-        # Third-party: prefer the primary mic, fall back to the second mic.
         if settings.audio_mic_device >= 0:
             return settings.audio_mic_device
         if settings.audio_second_mic_device >= 0:
             return settings.audio_second_mic_device
         return -1
 
-    def _stop_pattern(self) -> None:
+    def _stop_pattern(self, send_neutral: bool = True) -> None:
+        was_running = self._active_pattern is not None
         self._timer.stop()
         try:
             self.engine.stop()
@@ -394,15 +371,36 @@ class MusicTab(QWidget):
         for bar in self.bars.values():
             bar.setValue(0)
 
+        if was_running and send_neutral:
+            # Send the Remote tab's current static colour back to the
+            # strip so it does not stay frozen on whatever the last
+            # audio frame happened to be.
+            self.ctx.run(self._send_stable_colour())
+
+    async def _send_stable_colour(self) -> None:
+        r, g, b = self.ctx.settings.last_color
+        brightness = self.ctx.settings.clamp_brightness(
+            self.ctx.settings.last_brightness / 100.0
+        )
+        targets = self.ctx.resolve_targets()
+        await self.ctx.ble.set_color(
+            r, g, b, brightness, addresses=targets
+        )
+        self.ctx.log(
+            "audio",
+            f"Pattern stopped - stable colour restored "
+            f"rgb({r},{g},{b}) at {int(round(brightness * 100))}%",
+        )
+        self.preview.set_color(r, g, b, brightness, f"rgb({r},{g},{b})")
+
     def _stop_reacting(self) -> None:
         """Alias used by MainWindow.stop_all_activity() and the Esc shortcut.
 
-        Kept as a stable public-ish name so the main window never has to
-        reach into a private method. Behaviour matches ``_stop_pattern`` —
-        stop the reactive timer, stop the audio engine, reset the meters,
-        and disable the Stop button.
+        Same as ``_stop_pattern(send_neutral=True)``. Kept as a stable
+        public name so the main window never reaches into a private
+        method.
         """
-        self._stop_pattern()
+        self._stop_pattern(send_neutral=True)
 
     # =================================================================
     # Media player
@@ -434,13 +432,11 @@ class MusicTab(QWidget):
         """Play the highlighted row. This is the fixed Play button behaviour."""
         row = self.list_files.currentRow()
         if row < 0:
-            # Nothing selected — do nothing rather than pick something at random.
             self.lbl_now.setText("Select a song in the playlist, then press Play.")
             return
         self._play_index(row)
 
     def _on_row_double_clicked(self, _item: QListWidgetItem) -> None:
-        # Double-click is just a shortcut for "select + Play".
         self._play_selected()
 
     def _step_track(self, delta: int) -> None:
@@ -491,10 +487,8 @@ class MusicTab(QWidget):
         gain = self.spin_gain.value() / 2.0
         r, g, b = bands_to_rgb(frame, gain)
 
-        # Pattern-specific brightness shape.
         pattern_key = self._active_pattern.key if self._active_pattern else "spectrum"
         if pattern_key == "pulse":
-            # Bass slams brightness: quiet passages go dim, peaks go bright.
             raw_brightness = min(1.0, 0.15 + frame.bass * 6.0 * gain)
         else:
             raw_brightness = rms_to_brightness(
@@ -503,19 +497,20 @@ class MusicTab(QWidget):
                 gain,
             )
 
-        # The Options min/max always wins.
         brightness = self.ctx.settings.clamp_brightness(raw_brightness)
 
-        # The physical protocol sends ONE colour per frame, so the preview
-        # shows one colour across the strip honestly.
         self.preview.set_color(
-            r, g, b, brightness, self._active_pattern.name if self._active_pattern else "audio"
+            r, g, b, brightness,
+            self._active_pattern.name if self._active_pattern else "audio",
         )
 
         if self._busy:
             return
         self._busy = True
-        task = self.ctx.run(self.ctx.ble.set_color(r, g, b, brightness))
+        targets = self.ctx.resolve_targets()
+        task = self.ctx.run(
+            self.ctx.ble.set_color(r, g, b, brightness, addresses=targets)
+        )
         task.add_done_callback(lambda _: setattr(self, "_busy", False))
 
     # =================================================================
@@ -523,9 +518,8 @@ class MusicTab(QWidget):
     # =================================================================
 
     def shutdown(self) -> None:
-        self._timer.stop()
-        try:
-            self.engine.stop()
-        except Exception:
-            pass
+        # Do NOT send neutral colour on app close -- the user may be
+        # shutting down mid-look and we do not want to overwrite their
+        # last static colour on the way out.
+        self._stop_pattern(send_neutral=False)
         self.player.stop()

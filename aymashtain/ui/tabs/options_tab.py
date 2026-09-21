@@ -1,15 +1,20 @@
+# Original Path: aymashtain/ui/tabs/options_tab.py
+
 """Options tab: the single place for app-wide settings.
 
-Everything the Round 2 spec moved out of individual tabs lives here:
+Round 3 additions
+-----------------
+* ``brightness_limits_changed(int, int)`` signal fires whenever the
+  min / max sliders move. The main window catches it and tells Remote,
+  Sweep and Console to refresh their clamp notices.
+* Camera resolution list extended (1600x1200, 2560x1440, 3840x2160) and
+  the "Resolution" row renamed to "Capture size" so it is clear this is
+  the frame size the driver returns, not the sensor resolution.
+* Backend dropdown added next to the camera device so the user can pick
+  DirectShow / MSMF / Auto. Default is Auto, which is what the camera
+  tab uses when it opens.
 
-* save location for exports
-* theme (light / dark / follow OS)
-* developer tools lock (gates the Lab tab)
-* language stub (English only for now)
-* brightness min / max clamp
-* audio devices (mic, second mic, speaker)
-* camera device, resolution, FPS, exposure lock, white-balance lock
-* remember-window toggle
+Everything else is carried over unchanged from Round 2.
 """
 
 from __future__ import annotations
@@ -45,14 +50,27 @@ from ...config import (
 )
 from ..context import AppContext
 
-#: Common camera capture sizes. The Nuroum V11 tops out at 1440p @ 60 fps.
+#: Common camera capture sizes. The Nuroum V11 tops out at 1440p @ 60 fps,
+#: but we list the common sizes so any camera can pick a sensible frame.
 CAMERA_RESOLUTIONS = [
     "640x480",
+    "800x600",
     "1280x720",
+    "1600x1200",
     "1920x1080",
     "2560x1440",
+    "3840x2160",
 ]
 CAMERA_FPS_CHOICES = [15, 24, 30, 60]
+
+#: OpenCV capture backends the user can force. "auto" tries DSHOW first,
+#: then MSMF, then the default. DSHOW is more likely to honour manual
+#: exposure / WB, MSMF is faster but often refuses them.
+CAMERA_BACKENDS: list[tuple[str, str]] = [
+    ("auto", "Auto (try DSHOW, then MSMF)"),
+    ("dshow", "DirectShow (best for manual exposure)"),
+    ("msmf", "Media Foundation (fastest, may ignore manual)"),
+]
 
 
 class OptionsTab(QWidget):
@@ -61,6 +79,10 @@ class OptionsTab(QWidget):
     #: Fired when the developer-tools lock flips, so the main window can
     #: show or hide the Lab tab.
     developer_tools_changed = Signal(bool)
+
+    #: Fired when the brightness min / max sliders move. The main window
+    #: uses this to refresh the clamp notices in Remote / Sweep / Console.
+    brightness_limits_changed = Signal(int, int)
 
     def __init__(self, ctx: AppContext, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -236,13 +258,25 @@ class OptionsTab(QWidget):
         self.spin_camera.valueChanged.connect(self._on_camera_changed)
         form.addRow("Camera device index", self.spin_camera)
 
+        # --- capture backend --------------------------------------------
+        self.combo_backend = QComboBox()
+        for value, label in CAMERA_BACKENDS:
+            self.combo_backend.addItem(label, value)
+        idx = self.combo_backend.findData(
+            getattr(self.ctx.settings, "camera_backend", "auto")
+        )
+        self.combo_backend.setCurrentIndex(max(0, idx))
+        self.combo_backend.currentIndexChanged.connect(self._on_camera_changed)
+        form.addRow("Capture backend", self.combo_backend)
+
+        # --- capture size (was "Resolution") ----------------------------
         self.combo_resolution = QComboBox()
         for value in CAMERA_RESOLUTIONS:
             self.combo_resolution.addItem(value, value)
         idx = self.combo_resolution.findData(self.ctx.settings.camera_resolution)
         self.combo_resolution.setCurrentIndex(max(0, idx))
         self.combo_resolution.currentIndexChanged.connect(self._on_camera_changed)
-        form.addRow("Resolution", self.combo_resolution)
+        form.addRow("Capture size", self.combo_resolution)
 
         self.combo_fps = QComboBox()
         for value in CAMERA_FPS_CHOICES:
@@ -276,8 +310,10 @@ class OptionsTab(QWidget):
         form.addRow("", self.chk_wb_lock)
 
         note = QLabel(
-            "The Nuroum V11 supports up to 1440p @ 60 fps. If exposure stays "
-            "auto even with the lock on, close and reopen the Camera tab."
+            "The Nuroum V11 supports up to 1440p @ 60 fps. \"Capture size\" is "
+            "the size of the frames the driver returns, not the sensor's full "
+            "resolution. If exposure or white balance stays auto even with the "
+            "lock on, try a different capture backend, then reopen the Camera tab."
         )
         note.setWordWrap(True)
         note.setStyleSheet("color: #71717A;")
@@ -358,11 +394,17 @@ class OptionsTab(QWidget):
         self.lbl_max.setText(f"{hi}%")
         self.ctx.settings.brightness_min = lo
         self.ctx.settings.brightness_max = hi
+        # Tell the main window so Remote / Sweep / Console can refresh.
+        self.brightness_limits_changed.emit(lo, hi)
 
     def _on_audio_changed(self) -> None:
         self.ctx.settings.audio_mic_device = int(self.combo_mic.currentData() or -1)
-        self.ctx.settings.audio_second_mic_device = int(self.combo_mic2.currentData() or -1)
-        self.ctx.settings.audio_speaker_device = int(self.combo_speaker.currentData() or -1)
+        self.ctx.settings.audio_second_mic_device = int(
+            self.combo_mic2.currentData() or -1
+        )
+        self.ctx.settings.audio_speaker_device = int(
+            self.combo_speaker.currentData() or -1
+        )
 
     def _populate_audio_devices(self) -> None:
         inputs: list[tuple[int, str, str]] = []
@@ -380,11 +422,17 @@ class OptionsTab(QWidget):
             )
 
         self._fill_combo(self.combo_mic, inputs, self.ctx.settings.audio_mic_device)
-        self._fill_combo(self.combo_mic2, inputs, self.ctx.settings.audio_second_mic_device)
-        self._fill_combo(self.combo_speaker, outputs, self.ctx.settings.audio_speaker_device)
+        self._fill_combo(
+            self.combo_mic2, inputs, self.ctx.settings.audio_second_mic_device
+        )
+        self._fill_combo(
+            self.combo_speaker, outputs, self.ctx.settings.audio_speaker_device
+        )
 
     @staticmethod
-    def _fill_combo(combo: QComboBox, devices: list[tuple[int, str, str]], current: int) -> None:
+    def _fill_combo(
+        combo: QComboBox, devices: list[tuple[int, str, str]], current: int
+    ) -> None:
         combo.blockSignals(True)
         combo.clear()
         combo.addItem("(none)", -1)
@@ -403,6 +451,13 @@ class OptionsTab(QWidget):
         self.ctx.settings.camera_exposure_lock = self.chk_exposure_lock.isChecked()
         self.ctx.settings.camera_exposure_value = self.slider_exposure.value()
         self.ctx.settings.camera_wb_lock = self.chk_wb_lock.isChecked()
+        # Persist the backend choice in Settings too.
+        backend = self.combo_backend.currentData() or "auto"
+        try:
+            self.ctx.settings.camera_backend = backend
+        except AttributeError:
+            # Older Settings class may not have the field yet; harmless.
+            pass
 
     def _on_exposure_slider(self, value: int) -> None:
         self.lbl_exposure.setText(self._exposure_text(value))

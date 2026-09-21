@@ -1,20 +1,31 @@
+# Original Path: aymashtain/ui/tabs/console_tab.py
+
 """Raw hex console: decode, dry-run and batch-send frames.
 
-Round 2 change
---------------
-* Any ``BC0506`` brightness frame typed or pasted here is clamped against
-  the Options tab's min/max before it is queued. The clamp is the single
-  source of truth for the whole app; the console is not allowed to bypass
-  it. If a frame is adjusted, the console says so on the same line so the
-  user can see the original and the clamped value side by side.
-* Colour frames (``BC0406``) and everything else pass through untouched.
-  Brightness is only ever a standalone ``BC0506`` frame — it is never
-  merged into a colour frame.
+Round 3 Phase 0 fixes
+---------------------
+* **The clamp actually fires now.** The old code trusted
+  ``decode_hex_command()`` to fill ``brightness_fraction``, but that
+  helper only parses the *20-character* canonical brightness frame. The
+  vendor documentation and the user both use the *16-character* short
+  form (``BC0506040000000055``). The decoder returned ``None`` for the
+  short form, the clamp thought the frame was unparseable, and 100 %
+  went through untouched even when Options said 60 %. Fixed by parsing
+  the brightness value directly out of any well-formed ``BC0506`` frame,
+  regardless of how many reserved bytes it carries.
+* **Canonical re-encode.** A clamped frame is re-encoded with the
+  normal 20-character encoder, so every other consumer (DB, lab, other
+  tabs, hardware) sees a consistent format.
+* **Info label refreshes.** ``sync_clamp_notice()`` is wired to the
+  Options brightness range via the main window.
+* **Strip targeting.** Sends now go through ``ctx.resolve_targets()`` so
+  the new multi-strip selection is honoured.
 """
 
 from __future__ import annotations
 
 import asyncio
+import re
 
 from PySide6.QtWidgets import (
     QCheckBox,
@@ -34,12 +45,17 @@ from ...protocol import (
     encode_brightness,
     validate_hex,
 )
+from ...protocol.mrstar import BRIGHTNESS_MAX
 from ..context import AppContext
 
-PLACEHOLDER = """BC01010155        # power on
+PLACEHOLDER = """BC01010155             # power on
 BC0406003C03E8000055   # hue 60, saturation 100%
-BC0506040000000055     # brightness 100%
+BC0506040000000055     # brightness 100% (short form)
 """
+
+#: Any frame starting with this prefix is treated as an MR Star
+#: brightness frame, no matter how many reserved bytes it carries.
+_BRIGHTNESS_PREFIX = "BC0506"
 
 
 class ConsoleTab(QWidget):
@@ -109,12 +125,12 @@ class ConsoleTab(QWidget):
         hi = self.ctx.settings.brightness_max
         if lo <= 0 and hi >= 100:
             self.lbl_clamp.setText(
-                "Brightness frames (BC0506…) are sent exactly as typed. "
+                "Brightness frames (BC0506...) are sent exactly as typed. "
                 "Set a range in Options to clamp them here too."
             )
         else:
             self.lbl_clamp.setText(
-                f"Brightness frames (BC0506…) are clamped to {lo}%–{hi}% "
+                f"Brightness frames (BC0506...) are clamped to {lo}%-{hi}% "
                 f"before sending, using the Options range."
             )
 
@@ -122,31 +138,57 @@ class ConsoleTab(QWidget):
     # Brightness clamp
     # ------------------------------------------------------------------
 
-    def _clamp_brightness_frame(self, frame: str) -> tuple[str, bool]:
+    @staticmethod
+    def _extract_brightness_value(frame: str) -> int | None:
+        """Return the 0..1024 brightness value from any ``BC0506`` frame.
+
+        Accepts both the *16-character* short form used in the vendor
+        documentation (``BC0506040000000055``) and the *20-character*
+        canonical form the encoder produces
+        (``BC050604000000000055``). Returns ``None`` when the frame does
+        not look like a brightness frame at all, or when the value is
+        out of range -- in both cases the caller leaves the frame alone
+        so the user sees their raw bytes instead of a silent rewrite.
+        """
+        cleaned = re.sub(r"[^0-9A-Fa-f]", "", frame or "").upper()
+        if not cleaned.startswith(_BRIGHTNESS_PREFIX):
+            return None
+        if len(cleaned) < len(_BRIGHTNESS_PREFIX) + 4:
+            return None
+        try:
+            value = int(
+                cleaned[len(_BRIGHTNESS_PREFIX):len(_BRIGHTNESS_PREFIX) + 4], 16
+            )
+        except ValueError:
+            return None
+        if value > BRIGHTNESS_MAX:
+            return None
+        return value
+
+    def _clamp_brightness_frame(
+        self, frame: str
+    ) -> tuple[str, bool, str | None]:
         """Clamp a ``BC0506`` brightness frame to the Options min/max.
 
-        Returns ``(possibly_clamped_frame, was_clamped)``.
-
-        Frames that are not a well-formed MR Star brightness frame are
-        returned untouched — the console is still allowed to send raw
-        experimental bytes. Only the *documented* brightness format is
-        clamped, because that is the one path that can silently push a
-        strip above the user's ceiling.
+        Returns ``(possibly_clamped_frame, was_clamped, note)``. The note
+        is a short human-readable string (e.g. ``"100% -> 60%"``) for
+        the output pane, or ``None`` when no change was made.
         """
-        info = decode_hex_command(frame)
-        if info.get("family") != "mrstar_brightness":
-            return frame, False
-        fraction = info.get("brightness_fraction")
-        if fraction is None:
-            # Malformed length / reserved bytes — leave it alone so the
-            # user sees the validation error on their own frame.
-            return frame, False
+        value = self._extract_brightness_value(frame)
+        if value is None:
+            return frame, False, None
 
-        original = float(fraction)
-        clamped = self.ctx.settings.clamp_brightness(original)
-        if abs(clamped - original) < 1e-6:
-            return frame, False
-        return encode_brightness(clamped), True
+        original_fraction = value / float(BRIGHTNESS_MAX)
+        clamped_fraction = self.ctx.settings.clamp_brightness(original_fraction)
+        if abs(clamped_fraction - original_fraction) < 1e-6:
+            return frame, False, None
+
+        new_frame = encode_brightness(clamped_fraction)
+        note = (
+            f"{int(round(original_fraction * 100))}% -> "
+            f"{int(round(clamped_fraction * 100))}%"
+        )
+        return new_frame, True, note
 
     # ------------------------------------------------------------------
     # Decode (dry run)
@@ -163,11 +205,11 @@ class ConsoleTab(QWidget):
             )
 
             # Show what the clamp would do, without sending anything.
-            clamped, changed = self._clamp_brightness_frame(frame)
+            clamped, changed, note = self._clamp_brightness_frame(frame)
             if changed:
                 self.output.append(
                     f"      <span style='color:#F59E0B'>"
-                    f"clamp: {frame} → {clamped}</span>"
+                    f"clamp: {frame} → {clamped}  ({note})</span>"
                 )
 
     # ------------------------------------------------------------------
@@ -186,11 +228,13 @@ class ConsoleTab(QWidget):
         invalid = [f for f in frames if not validate_hex(f)[0]]
         if invalid:
             self.output.append(
-                f"<span style='color:#EF4444'>Aborted: {len(invalid)} invalid frame(s)</span>"
+                f"<span style='color:#EF4444'>Aborted: {len(invalid)} "
+                f"invalid frame(s)</span>"
             )
             return
 
         delay = self.spin_delay.value() / 1000.0
+        targets = self.ctx.resolve_targets()
         while True:
             for index, original in enumerate(frames, start=1):
                 if self._cancel:
@@ -198,15 +242,17 @@ class ConsoleTab(QWidget):
                     return
 
                 # Apply the Options brightness clamp to BC0506 frames.
-                frame, was_clamped = self._clamp_brightness_frame(original)
+                frame, was_clamped, note = self._clamp_brightness_frame(original)
 
-                sent = await self.ctx.ble.send_hex_all(frame, "console")
+                sent = await self.ctx.ble.send_hex_all(
+                    frame, "console", addresses=targets
+                )
                 self.ctx.db.add_command(frame, label="console", ok=bool(sent))
 
                 if was_clamped:
                     self.output.append(
                         f"[{index:>3}] {original} → clamped to {frame} "
-                        f"→ {sent} device(s)"
+                        f"({note}) → {sent} device(s)"
                     )
                 else:
                     self.output.append(f"[{index:>3}] {frame} → {sent} device(s)")

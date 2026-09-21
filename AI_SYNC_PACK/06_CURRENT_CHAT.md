@@ -1,4 +1,6 @@
-# Current Chat Summary — 2026-09-21
+<!-- BEGIN FILE: AI_SYNC_PACK/06_CURRENT_CHAT.md -->
+
+# Current Chat Summary — 2026-09-22
 
 This file records the conversation history between the user and the AI.
 Update it after every session.
@@ -482,15 +484,7 @@ and injects `# Original Path:` headers.
    - Opens the `handoff\` folder when done.
 
 3. **`AI_SYNC_PACK/08_End_Chat.md`** — **NEW FILE**. Reusable
-   end-of-chat ritual prompt. Instructs the AI to:
-   - Append a new session section to `06_CURRENT_CHAT.md`.
-   - Tick/move items in `03_TODO_USER_AND_AI.md`.
-   - Add a dated entry to `01_WORKFLOW.md`.
-   - Add new rules to `04_AI_ERRORS_ONLY.md` only if a mistake was made.
-   - Skip the other files unless their trigger conditions apply.
-   - Deliver **one file at a time** (waits for "next").
-   - Print a final summary block.
-   - The file lives only on the user's PC — not merged into the bundle.
+   end-of-chat ritual prompt.
 
 ### What was compiled
 
@@ -500,10 +494,6 @@ and injects `# Original Path:` headers.
 
 - Real `make_handoff.bat` run (not `--dry-run`) — confirm the zip is
   created and looks right when unzipped.
-- Unzip and visually confirm the flat folder layout matches the dry-run
-  list.
-- Then open a fresh AI chat with the flat bundle and paste the
-  next-chat opening line.
 
 ### Dry-run result
 
@@ -516,15 +506,6 @@ Collisions:           none
 Read failures:        none
 ```
 
-### What's left to do (next session)
-
-1. Run `make_handoff.bat` for real (creates `handoff_NNN.zip`).
-2. Unzip and inspect.
-3. Open a fresh chat, drop the folder in, paste the opening line.
-4. Round 3 Phase 0 — fix the Console clamp bug in `console_tab.py`,
-   then `sweep_tab.py` mid-run range read, then wire
-   `sync_clamp_notice()` from `main_window.py`.
-
 ### Suggested next-chat opening line
 
 > Continue from Session 11. The flat handoff works (32 files, zero
@@ -533,3 +514,136 @@ Read failures:        none
 > `sync_clamp_notice()` from `main_window.py`. Full replacement files
 > only. Do not touch `ble/manager.py`, `protocol/mrstar.py`, or
 > `storage/db.py` schema.
+
+---
+
+## Session 12 — Round 3 full batch (multi-strip, light modes, camera backend) — DELIVERED BUT APP NOT WORKING (v0.61 Alpha)
+
+**Date:** 2026-09-22
+**AI name:** DeepSeek
+**Version target:** v0.61 Alpha
+
+### User request
+
+- Finish Round 3 in one chat, one file at a time, full replacements only.
+- Deliver all five batches: Phase 0 clamp wiring, Phase 1 camera,
+  Phase 2 light theme, Phase 3 music tab, and the Batch 5 About dialog.
+- Add a **multi-strip selector** so the user can pick which strips
+  receive commands from every tab. Default = "All connected".
+- Move **Light modes** into the Remote tab as collapsible dropdowns,
+  placed under colour + brightness, before the strip preview. Mirror
+  the vendor app's "Light Mode" categories: Basic, Opening & closing,
+  Transition, Running water, Tailing, Running.
+- Keep the Music & Media tab for music only — remove the four
+  "Controller mode" entries from it. They belong in Remote → Light modes.
+- Add an **About dialog** that reads `CREDITS.md` and links to GitHub.
+- Rename the top-level "Options" menu to "Settings".
+- Camera: add DSHOW / MSMF / auto backend picker; longer capture-size
+  list; honest exposure + WB readback; theme-aware preview border.
+
+### Files replaced in this session
+
+1. `aymashtain/ui/context.py` — added `selected_strips` list,
+   `resolve_targets()`, `selected_strip_count()`, `is_strip_selected()`
+   for multi-strip control.
+2. `aymashtain/ui/tabs/console_tab.py` — fixed the clamp bypass: parse
+   both 18-char (`BC0506040000000055`) and 20-char
+   (`BC050604000000000055`) brightness frames directly; orange clamp
+   preview in "Decode only"; sends go through `ctx.resolve_targets()`.
+3. `aymashtain/ui/tabs/sweep_tab.py` — brightness range read fresh on
+   every step; logs when the range changes mid-run; sends go through
+   `ctx.resolve_targets()`.
+4. `aymashtain/ui/tabs/options_tab.py` — added
+   `brightness_limits_changed(int, int)` signal; camera backend
+   dropdown; longer capture-size list; renamed "Resolution" row to
+   "Capture size".
+5. `aymashtain/ui/main_window.py` — added `StripSelectorBar` (per-strip
+   checkboxes under the menu bar); renamed top-level menu "Options" →
+   "Settings"; wired `brightness_limits_changed` to
+   `sync_clamp_notice()` on Remote / Sweep / Console / Music; replaced
+   the plain-text About with a proper dialog that reads `CREDITS.md`;
+   Control-menu power commands honour strip selection.
+6. `aymashtain/ui/tabs/camera_tab.py` — backend picker
+   (Auto / DSHOW / MSMF) with fallback; honest exposure readback (no
+   more fake "locked"); honest WB readback; theme-aware border colours.
+7. `aymashtain/config.py` — added `camera_backend` field with
+   validation against `("auto", "dshow", "msmf")`.
+8. `aymashtain/ui/tabs/music_tab.py` — removed the four
+   "Controller mode" entries; Esc / Stop now sends the Remote tab's
+   current static colour back to the strip; sends go through
+   `ctx.resolve_targets()`; added `sync_clamp_notice()` hook.
+9. `aymashtain/ui/tabs/remote_tab.py` — **first version**: added
+   Light-modes section with six collapsible categories, multi-strip
+   preview rows (one row per selected strip), right-click hex override
+   per mode. **Second version (correction)**: added the missing
+   `setProperty("sectionHeader", True)` in `CollapsibleSection` so the
+   theme's header styles apply.
+10. `aymashtain/ui/theme.py` — added `sectionHeader="true"` styles in
+    both dark and light themes.
+
+### What was compiled
+
+- **None.** No `py_compile` output was shared this session. No pytest
+  run was shared this session. The user pasted all ten files without
+  reporting compile results between them.
+
+### What still needs testing
+
+- **The app does not work after this batch.** The user confirmed this
+  at the end of the session.
+- No error text, no traceback, no log file was shared. The failure is
+  **undiagnosed.**
+- First thing next session:
+  1. Run `python .\main.py` in PowerShell from the project root and
+     paste the exact error.
+  2. Run `python -m py_compile` on every file touched this session
+     (see the ten-file list above) and paste any output.
+  3. Run `python -m pytest -q` and paste the result.
+  4. Attach the newest `session_*.log` and `session_*.json` from
+     `%LOCALAPPDATA%\AymashTain\logs\`.
+
+### What's left to do (next session)
+
+1. Diagnose the launch failure — get the real error first, do not
+   guess.
+2. Fix whatever broke, one file at a time, full replacements.
+3. Re-run `py_compile` + `pytest` after each file.
+4. Do **not** start any new feature work until Round 3 is verified
+   working end to end.
+5. Then continue the Round 3 verification checklist:
+   - Console clamp on both 18-char and 20-char frames.
+   - Sweep mid-run range change.
+   - Remote / Sweep / Console / Music clamp-notice refresh when
+     Options range changes.
+   - Camera backend switch + honest exposure / WB readback.
+   - Multi-strip selector (tick one strip, confirm only that strip
+     receives commands).
+   - Light modes section expand / send.
+   - Music: Esc sends stable colour.
+
+### Honest notes on what's best-guess
+
+- **Light-mode hexes are best-guess.** The vendor app's Light Mode
+  opcodes are not in the captured protocol. Every button is mapped to
+  the closest documented effect byte (`BC 06 02 XX 00 00 55`), and the
+  tooltip shows which byte it uses. Right-click any button to override
+  with a captured frame — overrides live for the session only.
+- **Camera backend "auto"** tries DSHOW, then MSMF, then the OpenCV
+  default. DSHOW is more likely to honour manual exposure on Windows.
+- **Multi-strip selection** is stored only in `AppContext.selected_strips`
+  — it is not persisted across app restarts. That was intentional for
+  this round; persistence can be added later if wanted.
+
+### Suggested next-chat opening line
+
+> Continue from Session 12. The Round 3 batch was delivered but the app
+> does not start. First, collect the real failure output: run
+> `python .\main.py` from the project root and paste the error, run
+> `python -m py_compile` on every file touched in Session 12, run
+> `python -m pytest -q`, and attach the newest log from
+> `%LOCALAPPDATA%\AymashTain\logs\`. Then fix the launch failure one
+> file at a time, full replacement files only. Do not touch
+> `ble/manager.py`, `protocol/mrstar.py`, or `storage/db.py` schema.
+> Do not start Round 4 until Round 3 is verified working.
+
+<!-- END FILE: AI_SYNC_PACK/06_CURRENT_CHAT.md -->

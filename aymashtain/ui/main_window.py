@@ -1,15 +1,21 @@
+# Original Path: aymashtain/ui/main_window.py
+
 """Main window: assembles tabs, status bar, menus and lifecycle.
 
-Round 2 changes
+Round 3 changes
 ---------------
-* Options tab added (last tab). Also reachable from the menu bar.
-* View menu now has: dark-mode toggle, developer-tools toggle (mirrors
-  Options), Extract log, and Open Options.
-* Developer-tools lock hides the Lab tab when off.
-* Theme reads ``settings.resolved_dark()`` so light / dark / follow-OS works.
-* Window screen, position, size and DPI scale are saved on close and
-  restored on the same monitor when possible.
-* Minimum size 300x300, per the spec.
+* **Strip selector bar** under the menu bar. Ticks decide which strips
+  receive commands from every tab. "All" is the default and means every
+  connected strip. The list refreshes on every heartbeat.
+* **"Options" top-level menu renamed to "Settings"** so it matches what
+  the user expects. The tab itself is still called Options.
+* ``brightness_limits_changed`` from the Options tab is wired to
+  ``sync_clamp_notice()`` on Remote / Sweep / Console / Music, so the
+  clamp notices and info lines refresh the moment the sliders move.
+* **About dialog** reads ``CREDITS.md`` from the bundle and shows it
+  with the project link.
+* Everything else from Round 2 kept: theme toggle, dev-tools lock,
+  Extract log, window memory, Esc / Ctrl+. emergency stop.
 """
 
 from __future__ import annotations
@@ -27,12 +33,17 @@ from PySide6.QtGui import QAction, QGuiApplication, QIcon, QKeySequence
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QApplication,
+    QCheckBox,
     QFileDialog,
+    QHBoxLayout,
     QLabel,
     QMainWindow,
     QMessageBox,
-    QTableWidget,
+    QScrollArea,
     QTabWidget,
+    QTableWidget,
+    QTextBrowser,
+    QVBoxLayout,
     QWidget,
 )
 
@@ -56,20 +67,136 @@ from .tabs import (
 MIN_WIDTH = 300
 MIN_HEIGHT = 300
 
-ABOUT = f"""<h3>{APP_NAME} {APP_DISPLAY_VERSION}</h3>
-<p>Free, ad-free controller for MR Star / Magic Home style BLE LED strips.</p>
-<p><b>Protocol</b><br>
-Power <code>BC 01 01 XX 55</code><br>
-Colour <code>BC 04 06 HHHH SSSS 0000 55</code> (hue 0-359, saturation 0-1000)<br>
-Brightness <code>BC 05 06 BBBB 00000000 55</code> (0-1024)<br>
-Effect <code>BC 06 02 XX 0000 55</code></p>
-<p>Colour and brightness are sent as separate frames on purpose — merging them
-is what makes colours look pale or white-tinted.</p>
-<p>Data folder: <code>{paths.data_dir()}</code></p>
-<p>Credits: see <code>CREDITS.md</code> in the repository root, or the project
-page at <a href="https://github.com/aymashtain92/AymashTain-RGB-Universal-Remote">
-github.com/aymashtain92/AymashTain-RGB-Universal-Remote</a>.</p>
-"""
+
+class StripSelectorBar(QWidget):
+    """Horizontal strip of checkboxes: which strips commands go to.
+
+    Empty selection means "all connected strips". Clicking "All" clears
+    the individual ticks and puts the app back into broadcast mode.
+    """
+
+    def __init__(self, ctx: AppContext, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self.ctx = ctx
+        self._checkboxes: dict[str, QCheckBox] = {}
+        self._building = False
+
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(8, 4, 8, 4)
+        layout.setSpacing(6)
+
+        layout.addWidget(QLabel("<b>Control:</b>"))
+
+        self.chk_all = QCheckBox("All strips")
+        self.chk_all.setChecked(True)
+        self.chk_all.stateChanged.connect(self._on_all_toggled)
+        layout.addWidget(self.chk_all)
+
+        # The per-strip checkboxes live in a dedicated container so we can
+        # wipe and rebuild them without touching the "All" checkbox.
+        self._strip_container = QWidget()
+        self._strip_layout = QHBoxLayout(self._strip_container)
+        self._strip_layout.setContentsMargins(0, 0, 0, 0)
+        self._strip_layout.setSpacing(6)
+        layout.addWidget(self._strip_container)
+
+        layout.addStretch()
+
+        # Info label tells the user what the selection currently means.
+        self.lbl_info = QLabel("")
+        self.lbl_info.setStyleSheet("color: #71717A;")
+        layout.addWidget(self.lbl_info)
+
+        self.refresh()
+
+    # ------------------------------------------------------------------
+
+    def refresh(self) -> None:
+        """Rebuild the per-strip checkboxes from the BleManager state."""
+        self._building = True
+        # Wipe existing checkboxes.
+        while self._strip_layout.count():
+            item = self._strip_layout.takeAt(0)
+            widget = item.widget()
+            if widget is not None:
+                widget.deleteLater()
+        self._checkboxes.clear()
+
+        states = sorted(
+            self.ctx.ble.devices.values(),
+            key=lambda s: (s.status != "connected", s.name or s.address),
+        )
+
+        for state in states:
+            label = state.name or state.address
+            # Shorten long names so the bar stays compact.
+            if len(label) > 22:
+                label = label[:20] + "…"
+            chk = QCheckBox(label)
+            chk.setToolTip(
+                f"{state.name or state.address}\n"
+                f"Address: {state.address}\n"
+                f"Status: {state.status}"
+            )
+            chk.setEnabled(state.connected)
+            chk.setChecked(state.address in self.ctx.selected_strips)
+            chk.stateChanged.connect(
+                lambda _=0, addr=state.address: self._on_strip_toggled(addr)
+            )
+            self._checkboxes[state.address] = chk
+            self._strip_layout.addWidget(chk)
+
+        self._building = False
+        self._refresh_info()
+        self._sync_all_checkbox()
+
+    def _on_all_toggled(self) -> None:
+        if self._building:
+            return
+        if self.chk_all.isChecked():
+            # Clear individual selections -> broadcast mode.
+            self._building = True
+            for chk in self._checkboxes.values():
+                chk.setChecked(False)
+            self._building = False
+            self.ctx.selected_strips = []
+        else:
+            # User unchecked "All": pick the currently connected strips as
+            # a starting selection so they are not left sending nowhere.
+            connected = self.ctx.ble.connected_addresses()
+            self._building = True
+            for addr, chk in self._checkboxes.items():
+                chk.setChecked(addr in connected)
+            self._building = False
+            self.ctx.selected_strips = list(connected)
+        self._refresh_info()
+
+    def _on_strip_toggled(self, address: str) -> None:
+        if self._building:
+            return
+        selected = [
+            addr for addr, chk in self._checkboxes.items() if chk.isChecked()
+        ]
+        self.ctx.selected_strips = selected
+        self._sync_all_checkbox()
+        self._refresh_info()
+
+    def _sync_all_checkbox(self) -> None:
+        """The 'All' checkbox reflects whether the selection is empty."""
+        self._building = True
+        self.chk_all.setChecked(not self.ctx.selected_strips)
+        self._building = False
+
+    def _refresh_info(self) -> None:
+        connected = self.ctx.ble.connected_addresses()
+        if not connected:
+            self.lbl_info.setText("No strips connected")
+            return
+        if not self.ctx.selected_strips:
+            self.lbl_info.setText(f"Broadcast to {len(connected)} strip(s)")
+            return
+        live = [a for a in self.ctx.selected_strips if a in connected]
+        self.lbl_info.setText(f"{len(live)} of {len(connected)} strip(s) selected")
 
 
 class MainWindow(QMainWindow):
@@ -84,16 +211,29 @@ class MainWindow(QMainWindow):
             self.setWindowIcon(QIcon(str(icon)))
         self.setStyleSheet(theme.stylesheet(ctx.settings.resolved_dark()))
 
-        self.tabs = QTabWidget()
-        self.setCentralWidget(self.tabs)
+        # --- central layout: strip selector + tabs ---------------------
+        container = QWidget()
+        outer = QVBoxLayout(container)
+        outer.setContentsMargins(0, 0, 0, 0)
+        outer.setSpacing(0)
 
+        self.strip_bar = StripSelectorBar(ctx)
+        outer.addWidget(self.strip_bar)
+
+        self.tabs = QTabWidget()
+        outer.addWidget(self.tabs, stretch=1)
+        self.setCentralWidget(container)
+
+        # --- tabs ------------------------------------------------------
         self.tab_connect = ConnectTab(ctx)
         self.tab_remote = RemoteTab(ctx)
         self.tab_camera = CameraTab(ctx)
         self.tab_sweep = SweepTab(ctx, camera_tab=self.tab_camera)
         self.tab_music = MusicTab(ctx)
         self.tab_console = ConsoleTab(ctx)
-        self.tab_lab = LabTab(ctx, remote_tab=self.tab_remote, camera_tab=self.tab_camera)
+        self.tab_lab = LabTab(
+            ctx, remote_tab=self.tab_remote, camera_tab=self.tab_camera
+        )
         self.tab_events = EventsTab(ctx)
         self.tab_options = OptionsTab(ctx)
 
@@ -118,12 +258,16 @@ class MainWindow(QMainWindow):
 
         self._build_menu()
 
-        # Options tab emits this when the developer checkbox flips.
+        # --- cross-tab wiring -----------------------------------------
         self.tab_options.developer_tools_changed.connect(self._set_developer_tools)
+        self.tab_options.brightness_limits_changed.connect(
+            self._on_brightness_limits_changed
+        )
 
-        # Apply the initial lock state (Lab hidden when developer tools are off).
+        # Apply the initial lock state (Lab hidden when dev tools are off).
         self._apply_developer_lock(self.ctx.settings.developer_tools)
 
+        # --- status bar -----------------------------------------------
         self.lbl_devices = QLabel()
         self.lbl_frames = QLabel()
         self.statusBar().addPermanentWidget(self.lbl_devices)
@@ -162,7 +306,9 @@ class MainWindow(QMainWindow):
             action = QAction(label, self)
             action.triggered.connect(
                 lambda _=False, cmd=hex_cmd: self.ctx.run(
-                    self.ctx.ble.send_hex_all(cmd, "menu")
+                    self.ctx.ble.send_hex_all(
+                        cmd, "menu", addresses=self.ctx.resolve_targets()
+                    )
                 )
             )
             control_menu.addAction(action)
@@ -196,27 +342,25 @@ class MainWindow(QMainWindow):
         action_extract.triggered.connect(self._extract_log)
         view_menu.addAction(action_extract)
 
-        action_options = QAction("Options", self)
-        action_options.setShortcut(QKeySequence("Ctrl+,"))
-        action_options.triggered.connect(self._open_options_tab)
-        view_menu.addAction(action_options)
+        action_settings = QAction("Settings", self)
+        action_settings.setShortcut(QKeySequence("Ctrl+,"))
+        action_settings.triggered.connect(self._open_options_tab)
+        view_menu.addAction(action_settings)
 
-        # --- Options (menu-bar entry that opens the Options tab) ----------
-        options_menu = self.menuBar().addMenu("&Options")
-        action_open_options = QAction("Open Options tab", self)
-        action_open_options.triggered.connect(self._open_options_tab)
-        options_menu.addAction(action_open_options)
+        # --- Settings menu (opens the Options tab) -----------------------
+        settings_menu = self.menuBar().addMenu("&Settings")
+        action_open_settings = QAction("Open settings tab", self)
+        action_open_settings.triggered.connect(self._open_options_tab)
+        settings_menu.addAction(action_open_settings)
 
-        action_open_options_2 = QAction("Extract log…", self)
-        action_open_options_2.triggered.connect(self._extract_log)
-        options_menu.addAction(action_open_options_2)
+        action_extract_2 = QAction("Extract log…", self)
+        action_extract_2.triggered.connect(self._extract_log)
+        settings_menu.addAction(action_extract_2)
 
         # --- Help ---------------------------------------------------------
         help_menu = self.menuBar().addMenu("&Help")
         action_about = QAction("About", self)
-        action_about.triggered.connect(
-            lambda: QMessageBox.about(self, f"About {APP_NAME}", ABOUT)
-        )
+        action_about.triggered.connect(self._show_about)
         help_menu.addAction(action_about)
 
     # ------------------------------------------------------------------
@@ -256,12 +400,10 @@ class MainWindow(QMainWindow):
         enabled = bool(enabled)
         self.ctx.settings.developer_tools = enabled
 
-        # Sync the View-menu checkmark.
         self.action_dev_tools.blockSignals(True)
         self.action_dev_tools.setChecked(enabled)
         self.action_dev_tools.blockSignals(False)
 
-        # Sync the Options checkbox.
         self.tab_options.chk_dev.blockSignals(True)
         self.tab_options.chk_dev.setChecked(enabled)
         self.tab_options.chk_dev.blockSignals(False)
@@ -269,10 +411,28 @@ class MainWindow(QMainWindow):
         self._apply_developer_lock(enabled)
 
     def _apply_developer_lock(self, enabled: bool) -> None:
-        """Hide or show the Lab tab based on the lock."""
         index = self.tabs.indexOf(self.tab_lab)
         if index >= 0:
             self.tabs.setTabVisible(index, enabled)
+
+    # ------------------------------------------------------------------
+    # Clamp notice fan-out
+    # ------------------------------------------------------------------
+
+    def _on_brightness_limits_changed(self, lo: int, hi: int) -> None:
+        """Options changed the brightness range. Tell every tab that shows it."""
+        self.strip_bar._refresh_info()
+        for name in ("sync_clamp_notice",):
+            for tab in (self.tab_remote, self.tab_sweep, self.tab_console, self.tab_music):
+                hook = getattr(tab, name, None)
+                if hook is not None:
+                    try:
+                        hook()
+                    except Exception as exc:  # noqa: BLE001 - defensive
+                        self.ctx.log(
+                            "error",
+                            f"{type(tab).__name__}.{name}() failed: {exc}",
+                        )
 
     # ------------------------------------------------------------------
     # Activity control
@@ -366,13 +526,64 @@ class MainWindow(QMainWindow):
         return "\n".join(lines)
 
     # ------------------------------------------------------------------
+    # About dialog
+    # ------------------------------------------------------------------
+
+    def _show_about(self) -> None:
+        credits = self._load_credits()
+
+        html = f"""
+        <h2>{APP_NAME} {APP_DISPLAY_VERSION}</h2>
+        <p>Free, ad-free controller for MR Star / Magic Home style BLE LED strips.</p>
+        <p><b>Project</b><br>
+        <a href="https://github.com/aymashtain92/AymashTain-RGB-Universal-Remote">
+        github.com/aymashtain92/AymashTain-RGB-Universal-Remote</a></p>
+        <p><b>Protocol</b><br>
+        Power <code>BC 01 01 XX 55</code><br>
+        Colour <code>BC 04 06 HHHH SSSS 0000 55</code> (hue 0-359, saturation 0-1000)<br>
+        Brightness <code>BC 05 06 BBBB 00000000 55</code> (0-1024)<br>
+        Effect <code>BC 06 02 XX 0000 55</code></p>
+        <p>Colour and brightness are sent as separate frames on purpose —
+        merging them is what makes colours look pale or white-tinted.</p>
+        <p><b>Data folder</b><br><code>{paths.data_dir()}</code></p>
+        <hr>
+        <h3>Credits</h3>
+        <pre style="white-space: pre-wrap; font-family: inherit;">{credits}</pre>
+        """
+
+        dialog = QMessageBox(self)
+        dialog.setWindowTitle(f"About {APP_NAME}")
+        dialog.setIcon(QMessageBox.Information)
+        dialog.setTextFormat(Qt.RichText)
+        # QMessageBox does not scroll long text. Use a QTextBrowser instead
+        # when the credits block is large.
+        browser = QTextBrowser()
+        browser.setOpenExternalLinks(True)
+        browser.setHtml(html)
+        browser.setMinimumSize(560, 480)
+
+        dialog.layout().addWidget(
+            browser, dialog.layout().rowCount(), 0, 1, dialog.layout().columnCount()
+        )
+        dialog.exec()
+
+    @staticmethod
+    def _load_credits() -> str:
+        path = paths.bundle_dir() / "CREDITS.md"
+        if not path.is_file():
+            return "(CREDITS.md not found.)"
+        try:
+            return path.read_text(encoding="utf-8")
+        except OSError as exc:
+            return f"(Could not read CREDITS.md: {exc})"
+
+    # ------------------------------------------------------------------
     # Window memory
     # ------------------------------------------------------------------
 
     def _restore_window_state(self) -> None:
         settings = self.ctx.settings
 
-        # Old builds only had a base64 geometry blob.
         if not settings.remember_window:
             if settings.window_geometry:
                 self.restoreGeometry(
@@ -407,7 +618,6 @@ class MainWindow(QMainWindow):
                 x = geo.x() + (geo.width() - width) // 2
                 y = geo.y() + (geo.height() - height) // 2
 
-            # Clamp so we never restore fully off-screen.
             x = max(geo.x(), min(x, geo.x() + geo.width() - width))
             y = max(geo.y(), min(y, geo.y() + geo.height() - height))
             self.setGeometry(x, y, width, height)
@@ -418,7 +628,6 @@ class MainWindow(QMainWindow):
 
     def _capture_window_state(self) -> None:
         settings = self.ctx.settings
-        # Always write the legacy geometry blob so older tooling keeps working.
         settings.window_geometry = bytes(self.saveGeometry().toBase64()).decode()
 
         if not settings.remember_window:
@@ -453,6 +662,7 @@ class MainWindow(QMainWindow):
     def _tick(self) -> None:
         self.tab_events.drain()
         self.tab_connect.refresh()
+        self.strip_bar.refresh()
         connected = len(self.ctx.ble.connected_addresses())
         total = len(self.ctx.ble.devices)
         self.lbl_devices.setText(f"  Strips: {connected}/{total}  ")
@@ -491,9 +701,3 @@ class MainWindow(QMainWindow):
             QApplication.processEvents(QEventLoop.AllEvents, 50)
         if not task.done():
             task.cancel()
-
-
-def center_placeholder(text: str) -> QWidget:
-    label = QLabel(text)
-    label.setAlignment(Qt.AlignCenter)
-    return label

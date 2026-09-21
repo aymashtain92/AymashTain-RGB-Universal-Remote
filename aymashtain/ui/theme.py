@@ -1,20 +1,25 @@
+# Original Path: aymashtain/ui/theme.py
+
 """Qt stylesheet for the dark (default) and light themes.
 
-Round 2 changes
+Round 3 changes
 ---------------
-* Dark-mode highlights softened. Selected tabs, accent buttons, progress
-  chunks and menu selections used to jump to bright indigo (#4F46E5) on
-  a near-black background, which was visually harsh. They now sit at
-  indigo-700 / indigo-800, still clearly "active" but no longer glaring.
-* Slider handle in dark mode softened from near-white (#FAFAFA) to
-  zinc-300 (#D4D4D8) so it stops looking like a bright speck.
-* Menu audit: separators, disabled items and pressed menu-bar items now
-  have explicit rules in both themes. Previously they fell back to Qt
-  defaults, which occasionally flashed bright white lines in dark mode.
+* **Section header style** added for the collapsible Light-modes
+  categories in the Remote tab. Uses the theme's own accent so the
+  arrow and label are readable in both dark and light mode.
+* **Camera tab borders parity.** The camera tab now paints its own
+  border colours based on ``settings.resolved_dark()``, so this file
+  does not need to reach into that widget. But the surrounding frame
+  and background of ``#0B0B0F`` used to leak through in light mode;
+  that is now handled by the camera tab itself.
 
-The Remote tab's "warm white" / "cool white" preset buttons are NOT a
-stylesheet concern. They were broken by an inline setStyleSheet() call
-in remote_tab.py that replaced the whole widget rule. Fix belongs there.
+Round 2 changes kept
+--------------------
+* Dark-mode highlights softened (indigo-800 tabs, indigo-700 accent
+  buttons, zinc-300 slider handle).
+* Menu audit done: separators, disabled items, pressed menu-bar items
+  have explicit rules in both themes.
+* Remote tab's preset buttons use icons, not inline stylesheets.
 """
 
 from __future__ import annotations
@@ -66,6 +71,21 @@ QGroupBox {
     font-weight: 600; padding: 12px;
 }
 QGroupBox::title { subcontrol-origin: margin; left: 12px; padding: 0 6px; color: #818CF8; }
+
+/* --- section headers (Light modes / collapsible) --------------------- */
+QPushButton[sectionHeader="true"] {
+    background: #1B1B21;
+    border: 1px solid #27272A;
+    border-radius: 6px;
+    padding: 6px 10px;
+    text-align: left;
+    font-weight: 600;
+    color: #C7D2FE;
+}
+QPushButton[sectionHeader="true"]:hover {
+    background: #27272A;
+    border-color: #4338CA;
+}
 
 /* --- inputs ----------------------------------------------------------- */
 QLineEdit, QPlainTextEdit, QTextEdit, QSpinBox, QDoubleSpinBox, QComboBox {
@@ -182,6 +202,21 @@ QGroupBox {
     font-weight: 600; padding: 12px;
 }
 QGroupBox::title { subcontrol-origin: margin; left: 12px; padding: 0 6px; color: #4338CA; }
+
+/* --- section headers (Light modes / collapsible) --------------------- */
+QPushButton[sectionHeader="true"] {
+    background: #EEF2FF;
+    border: 1px solid #C7D2FE;
+    border-radius: 6px;
+    padding: 6px 10px;
+    text-align: left;
+    font-weight: 600;
+    color: #3730A3;
+}
+QPushButton[sectionHeader="true"]:hover {
+    background: #E0E7FF;
+    border-color: #6366F1;
+}
 
 QTextEdit, QPlainTextEdit { font-family: 'Consolas', monospace; font-size: 12px; background: #FFFFFF; }
 QLineEdit, QSpinBox, QDoubleSpinBox, QComboBox {

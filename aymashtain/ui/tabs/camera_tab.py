@@ -1,18 +1,34 @@
+# Original Path: aymashtain/ui/tabs/camera_tab.py
+
 """Webcam verification of what the strip actually emits.
 
-Round 2 changes
----------------
-* Preview border: light grey while the camera is closed, dark grey while it
-  is open (matches the spec).
-* Camera device, resolution, FPS, exposure lock, manual exposure value, and
-  white-balance lock are all read from Settings, so the Options tab is the
-  single source of truth.
-* A real forced exposure lock. On Windows DirectShow, auto-exposure is turned
-  off by writing 0.25 to ``CAP_PROP_AUTO_EXPOSURE`` and then the manual value
-  to ``CAP_PROP_EXPOSURE``. On V4L2/Linux, 1 = manual. We try both, read the
-  value back, and log honestly whether the driver accepted the lock.
-* White-balance lock is the same idea: ``CAP_PROP_AUTO_WB = 0`` freezes the
-  current gains. If the driver refuses, we say so instead of pretending.
+Round 3 Phase 1 fixes
+---------------------
+* **Backend picker.** A new "Capture backend" dropdown mirrors Options:
+  Auto (try DSHOW, then MSMF, then default), DirectShow, Media
+  Foundation. DSHOW is the only backend that reliably honours manual
+  exposure / WB on most Windows webcams, but MSMF is faster, so both
+  are offered.
+* **Capture size, not "Resolution".** The row is renamed because the
+  value is the size of the frames the driver hands back, not the
+  sensor's optical resolution. The list matches Options.
+* **Honest exposure reporting.** The old code claimed "locked at X" as
+  soon as the driver *accepted the write*. That is not the same as
+  actually being locked -- several drivers accept the write and then
+  keep running auto. We now read ``CAP_PROP_AUTO_EXPOSURE`` *and*
+  ``CAP_PROP_EXPOSURE`` back and print what the driver actually reports,
+  not what we asked for.
+* **Honest WB reporting.** Same for white balance: read
+  ``CAP_PROP_AUTO_WB`` back and say exactly what the driver returned.
+* **Theme-aware borders.** The preview frame now uses colours that
+  match the active theme, so light mode is legible too.
+
+Round 2 behaviour kept
+----------------------
+* Preview border changes state between closed and open.
+* Resolution, FPS, exposure lock and WB lock all read from Settings
+  (Options is the single source of truth).
+* Camera stays local-only. No uploads.
 """
 
 from __future__ import annotations
@@ -42,16 +58,29 @@ from PySide6.QtWidgets import (
 from ...vision import CameraVerifier
 from ..context import AppContext
 
+#: Same list as the Options tab, so the two dropdowns never disagree.
 CAMERA_RESOLUTIONS = [
     "640x480",
+    "800x600",
     "1280x720",
+    "1600x1200",
     "1920x1080",
     "2560x1440",
+    "3840x2160",
 ]
 CAMERA_FPS_CHOICES = [15, 24, 30, 60]
 
-BORDER_CLOSED = "2px solid #D4D4D8"   # light grey
-BORDER_OPEN = "2px solid #71717A"     # dark grey
+CAMERA_BACKENDS: list[tuple[str, str]] = [
+    ("auto", "Auto (try DSHOW, then MSMF)"),
+    ("dshow", "DirectShow"),
+    ("msmf", "Media Foundation"),
+]
+
+#: Preview border colours, resolved per theme at paint time.
+DARK_BORDER_CLOSED = "2px solid #27272A"
+DARK_BORDER_OPEN = "2px solid #4338CA"
+LIGHT_BORDER_CLOSED = "2px solid #D4D4D8"
+LIGHT_BORDER_OPEN = "2px solid #4F46E5"
 
 
 class CameraTab(QWidget):
@@ -62,6 +91,8 @@ class CameraTab(QWidget):
         self._timer = QTimer(self)
         self._timer.timeout.connect(self._tick)
         self._locks_applied: dict[str, str] = {}
+        #: Populated by ``_apply_capture_settings`` for the info line.
+        self._last_report: str = ""
 
         layout = QHBoxLayout(self)
 
@@ -73,10 +104,6 @@ class CameraTab(QWidget):
         self.view = QLabel("Camera closed.")
         self.view.setAlignment(Qt.AlignCenter)
         self.view.setMinimumSize(480, 360)
-        self.view.setStyleSheet(
-            f"background:#0B0B0F; border-radius:10px; color:#71717A; "
-            f"border: {BORDER_CLOSED};"
-        )
         left.addWidget(self.view, stretch=1)
 
         controls = QHBoxLayout()
@@ -107,13 +134,23 @@ class CameraTab(QWidget):
         self.spin_index.setValue(ctx.settings.camera_index)
         form.addRow("Camera index", self.spin_index)
 
-        # --- resolution ---------------------------------------------
+        # --- backend --------------------------------------------------
+        self.combo_backend = QComboBox()
+        for value, label in CAMERA_BACKENDS:
+            self.combo_backend.addItem(label, value)
+        idx = self.combo_backend.findData(
+            getattr(ctx.settings, "camera_backend", "auto")
+        )
+        self.combo_backend.setCurrentIndex(max(0, idx))
+        form.addRow("Capture backend", self.combo_backend)
+
+        # --- capture size (was "Resolution") -------------------------
         self.combo_resolution = QComboBox()
         for value in CAMERA_RESOLUTIONS:
             self.combo_resolution.addItem(value, value)
         idx = self.combo_resolution.findData(ctx.settings.camera_resolution)
         self.combo_resolution.setCurrentIndex(max(0, idx))
-        form.addRow("Resolution", self.combo_resolution)
+        form.addRow("Capture size", self.combo_resolution)
 
         # --- fps -----------------------------------------------------
         self.combo_fps = QComboBox()
@@ -185,19 +222,45 @@ class CameraTab(QWidget):
         right.addWidget(self.table, stretch=1)
 
         self.lbl_status = QLabel(
-            "White % is min(r,g,b)/max(r,g,b): high values mean the colour is being washed out."
+            "White % is min(r,g,b)/max(r,g,b): high values mean the colour "
+            "is being washed out."
         )
         self.lbl_status.setWordWrap(True)
         right.addWidget(self.lbl_status)
 
         layout.addLayout(right, stretch=2)
 
-        # Persist lock checkbox changes back to settings immediately.
+        # --- initial border paint ------------------------------------
+        self._apply_border(open_=False)
+
+        # --- persist changes back to Settings ------------------------
         self.chk_exposure.stateChanged.connect(self._on_lock_toggled)
         self.chk_wb.stateChanged.connect(self._on_lock_toggled)
         self.combo_resolution.currentIndexChanged.connect(self._on_settings_changed)
         self.combo_fps.currentIndexChanged.connect(self._on_settings_changed)
+        self.combo_backend.currentIndexChanged.connect(self._on_settings_changed)
         self.spin_index.valueChanged.connect(self._on_settings_changed)
+
+    # =================================================================
+    # Theme-aware preview border
+    # =================================================================
+
+    def _border_css(self, open_: bool) -> str:
+        dark = self.ctx.settings.resolved_dark()
+        if dark:
+            border = DARK_BORDER_OPEN if open_ else DARK_BORDER_CLOSED
+            return (
+                f"background:#0B0B0F; border-radius:10px; color:#71717A; "
+                f"border: {border};"
+            )
+        border = LIGHT_BORDER_OPEN if open_ else LIGHT_BORDER_CLOSED
+        return (
+            f"background:#18181B; border-radius:10px; color:#A1A1AA; "
+            f"border: {border};"
+        )
+
+    def _apply_border(self, open_: bool) -> None:
+        self.view.setStyleSheet(self._border_css(open_))
 
     # =================================================================
     # Preview
@@ -209,21 +272,27 @@ class CameraTab(QWidget):
             self.verifier.close()
             self.btn_toggle.setText("Start preview")
             self.view.setText("Camera closed.")
-            self.view.setPixmap(QPixmap())  # drop the last frame
+            self.view.setPixmap(QPixmap())
             self._apply_border(open_=False)
             self.lbl_lock_status.setText("")
             self._locks_applied.clear()
             return
 
         if not CameraVerifier.available():
-            self.lbl_status.setText("OpenCV is not installed — run: pip install opencv-python")
+            self.lbl_status.setText(
+                "OpenCV is not installed — run: pip install opencv-python"
+            )
             return
 
         self.verifier.index = self.spin_index.value()
         self.ctx.settings.camera_index = self.verifier.index
+        backend = self.combo_backend.currentData() or "auto"
 
-        if not self.verifier.open():
-            self.lbl_status.setText(f"Could not open camera {self.verifier.index}.")
+        if not self._open_with_backend(backend):
+            self.lbl_status.setText(
+                f"Could not open camera {self.verifier.index} with backend "
+                f"{backend}. Try a different backend or index."
+            )
             return
 
         # Apply resolution / fps / locks right after opening.
@@ -233,20 +302,66 @@ class CameraTab(QWidget):
         self.btn_toggle.setText("Stop preview")
         self.view.setText("")
         self._apply_border(open_=True)
-        self.ctx.log("camera", f"Preview started on camera {self.verifier.index}")
-
-    def _apply_border(self, open_: bool) -> None:
-        border = BORDER_OPEN if open_ else BORDER_CLOSED
-        self.view.setStyleSheet(
-            f"background:#0B0B0F; border-radius:10px; color:#71717A; "
-            f"border: {border};"
+        self.ctx.log(
+            "camera",
+            f"Preview started on camera {self.verifier.index} "
+            f"(backend={backend})",
         )
+
+    def _open_with_backend(self, backend: str) -> bool:
+        """Open the camera, honouring the selected backend.
+
+        ``auto`` tries DirectShow first, then Media Foundation, then the
+        OpenCV default. Any failure falls through to the next option so a
+        machine without one of the backends still works.
+        """
+        import cv2
+
+        if backend == "dshow":
+            order = ["dshow"]
+        elif backend == "msmf":
+            order = ["msmf"]
+        else:  # auto
+            order = ["dshow", "msmf", "any"]
+
+        for name in order:
+            if name == "dshow" and not hasattr(cv2, "CAP_DSHOW"):
+                continue
+            if name == "msmf" and not hasattr(cv2, "CAP_MSMF"):
+                continue
+
+            self.verifier.close()
+            capture = None
+            try:
+                if name == "dshow":
+                    capture = cv2.VideoCapture(self.verifier.index, cv2.CAP_DSHOW)
+                elif name == "msmf":
+                    capture = cv2.VideoCapture(self.verifier.index, cv2.CAP_MSMF)
+                else:
+                    capture = cv2.VideoCapture(self.verifier.index)
+            except Exception as exc:  # noqa: BLE001 - driver-specific
+                self.ctx.log(
+                    "camera", f"Backend {name} raised {type(exc).__name__}: {exc}"
+                )
+                continue
+
+            if capture is not None and capture.isOpened():
+                self.verifier.capture = capture
+                self.ctx.log("camera", f"Opened camera via backend '{name}'")
+                return True
+
+            if capture is not None:
+                capture.release()
+
+        return False
 
     def _apply_capture_settings(self) -> None:
         """Push resolution, fps, exposure lock and wb lock to the driver.
 
-        Every step is reported back to the user, because some drivers silently
-        ignore these properties. We would rather say "not accepted" than lie.
+        Every step is reported back to the user from the *readback* value,
+        not from the value we requested. If the driver silently ignores a
+        setting, the info line says so -- we would rather be honest than
+        pretend the lock is on when it is not.
         """
         cap = self.verifier.capture
         if cap is None:
@@ -254,7 +369,7 @@ class CameraTab(QWidget):
 
         import cv2
 
-        # --- resolution --------------------------------------------------
+        # --- capture size ------------------------------------------------
         width, height = self._parse_resolution(self.combo_resolution.currentData())
         cap.set(cv2.CAP_PROP_FRAME_WIDTH, float(width))
         cap.set(cv2.CAP_PROP_FRAME_HEIGHT, float(height))
@@ -266,44 +381,11 @@ class CameraTab(QWidget):
         cap.set(cv2.CAP_PROP_FPS, fps_target)
         got_fps = float(cap.get(cv2.CAP_PROP_FPS) or 0.0)
 
-        # --- exposure lock ----------------------------------------------
-        exp_msg = "auto"
-        if self.chk_exposure.isChecked():
-            manual_value = float(self.slider_exposure.value())
-            # Try Windows DirectShow convention first, then V4L2.
-            accepted = False
-            for manual_flag in (0.25, 1.0):
-                try:
-                    cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, manual_flag)
-                    cap.set(cv2.CAP_PROP_EXPOSURE, manual_value)
-                    read_back = cap.get(cv2.CAP_PROP_EXPOSURE)
-                    if read_back is not None and abs(float(read_back) - manual_value) < 1.0:
-                        accepted = True
-                        break
-                except Exception:
-                    continue
-            if accepted:
-                exp_msg = f"locked at {self._exposure_text(self.slider_exposure.value())}"
-            else:
-                exp_msg = "driver refused lock — auto may win"
-        else:
-            # Best-effort: hand control back to auto.
-            for auto_flag in (0.75, 3.0):
-                try:
-                    cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, auto_flag)
-                    break
-                except Exception:
-                    continue
+        # --- exposure ----------------------------------------------------
+        exp_msg = self._apply_exposure(cap, cv2)
 
-        # --- white balance lock -----------------------------------------
-        wb_msg = "auto"
-        if self.chk_wb.isChecked():
-            try:
-                cap.set(cv2.CAP_PROP_AUTO_WB, 0.0)
-                # Most webcams freeze whatever gains they had at that moment.
-                wb_msg = "locked (gains frozen)"
-            except Exception:
-                wb_msg = "driver refused lock"
+        # --- white balance ----------------------------------------------
+        wb_msg = self._apply_wb(cap, cv2)
 
         # --- report ------------------------------------------------------
         self._locks_applied = {
@@ -312,15 +394,117 @@ class CameraTab(QWidget):
             "exposure": exp_msg,
             "white_balance": wb_msg,
         }
-        self.lbl_lock_status.setText(
-            f"Driver reports — resolution: {got_w}x{got_h}, fps: {got_fps:.1f}. "
-            f"Exposure: {exp_msg}. White balance: {wb_msg}."
+        self._last_report = (
+            f"Driver reports — capture size: {got_w}x{got_h}, "
+            f"fps: {got_fps:.1f}. Exposure: {exp_msg}. White balance: {wb_msg}."
         )
-        self.ctx.log(
-            "camera",
-            f"Settings applied: {got_w}x{got_h} @ {got_fps:.1f} fps, "
-            f"exposure={exp_msg}, wb={wb_msg}",
+        self.lbl_lock_status.setText(self._last_report)
+        self.ctx.log("camera", self._last_report)
+
+    def _apply_exposure(self, cap, cv2) -> str:
+        """Set or clear exposure lock; return a human-readable result.
+
+        Windows DirectShow expects ``CAP_PROP_AUTO_EXPOSURE = 0.25`` for
+        manual and ``0.75`` for auto. V4L2/Linux uses ``1.0`` for manual
+        and ``3.0`` for auto. We try both, then read every relevant
+        property back to describe what actually happened.
+        """
+        if not self.chk_exposure.isChecked():
+            # Best-effort: hand control back to auto.
+            for auto_flag in (0.75, 3.0):
+                try:
+                    cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, auto_flag)
+                    break
+                except Exception:
+                    continue
+            auto_read = self._safe_get(cap, cv2.CAP_PROP_AUTO_EXPOSURE)
+            return f"auto (flag={auto_read})"
+
+        manual_value = float(self.slider_exposure.value())
+        chosen_flag: float | None = None
+        for manual_flag in (0.25, 1.0):
+            try:
+                cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, manual_flag)
+                cap.set(cv2.CAP_PROP_EXPOSURE, manual_value)
+                # Give the driver a moment to react before reading back.
+                read_auto = self._safe_get(cap, cv2.CAP_PROP_AUTO_EXPOSURE)
+                # If the driver kept the auto flag on, this manual flag
+                # was wrong -- try the other one.
+                if read_auto is not None and read_auto >= 0.6:
+                    continue
+                chosen_flag = manual_flag
+                break
+            except Exception:
+                continue
+
+        read_exposure = self._safe_get(cap, cv2.CAP_PROP_EXPOSURE)
+        read_auto = self._safe_get(cap, cv2.CAP_PROP_AUTO_EXPOSURE)
+
+        if chosen_flag is None or read_auto is None or read_auto >= 0.6:
+            return (
+                f"driver refused lock — asked {self._exposure_text(int(manual_value))}, "
+                f"auto flag={read_auto}, exposure={read_exposure}"
+            )
+
+        # Manual flag stuck. Now check whether the exposure value landed.
+        if read_exposure is None:
+            return (
+                f"manual flag set (={read_auto}), but driver did not return "
+                f"an exposure value"
+            )
+
+        try:
+            actual = float(read_exposure)
+        except (TypeError, ValueError):
+            actual = None
+
+        if actual is not None and abs(actual - manual_value) <= 0.5:
+            return (
+                f"locked at {self._exposure_text(int(round(actual)))} "
+                f"(auto flag={read_auto})"
+            )
+
+        # Manual flag is set but value readback differs -- report both
+        # numbers so the user can see the truth.
+        return (
+            f"manual flag set (={read_auto}) but exposure reports "
+            f"{read_exposure} (asked {manual_value:.2f})"
         )
+
+    def _apply_wb(self, cap, cv2) -> str:
+        """Set or clear WB lock; return a human-readable result."""
+        if not self.chk_wb.isChecked():
+            try:
+                cap.set(cv2.CAP_PROP_AUTO_WB, 1.0)
+            except Exception:
+                pass
+            flag = self._safe_get(cap, cv2.CAP_PROP_AUTO_WB)
+            return f"auto (flag={flag})"
+
+        try:
+            cap.set(cv2.CAP_PROP_AUTO_WB, 0.0)
+        except Exception as exc:  # noqa: BLE001 - driver-specific
+            return f"driver refused (raised {type(exc).__name__})"
+
+        flag = self._safe_get(cap, cv2.CAP_PROP_AUTO_WB)
+        if flag is None:
+            return "driver did not return an auto-WB flag"
+        if flag >= 0.5:
+            return f"driver ignored lock (auto flag still {flag})"
+        return f"locked (auto flag={flag})"
+
+    @staticmethod
+    def _safe_get(cap, prop) -> float | None:
+        try:
+            value = cap.get(prop)
+        except Exception:  # noqa: BLE001 - driver-specific
+            return None
+        if value is None:
+            return None
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return None
 
     @staticmethod
     def _parse_resolution(value) -> tuple[int, int]:
@@ -366,8 +550,17 @@ class CameraTab(QWidget):
 
     def _on_settings_changed(self) -> None:
         self.ctx.settings.camera_index = self.spin_index.value()
-        self.ctx.settings.camera_resolution = self.combo_resolution.currentData() or "1280x720"
+        self.ctx.settings.camera_resolution = (
+            self.combo_resolution.currentData() or "1280x720"
+        )
         self.ctx.settings.camera_fps = int(self.combo_fps.currentData() or 30)
+        # Persist the backend choice. Harmless if the field does not exist.
+        try:
+            self.ctx.settings.camera_backend = (
+                self.combo_backend.currentData() or "auto"
+            )
+        except AttributeError:
+            pass
 
         # If the camera is open, push the change straight through.
         if self.verifier.is_open:
@@ -444,3 +637,12 @@ class CameraTab(QWidget):
         self._timer.stop()
         self.verifier.close()
         self._apply_border(open_=False)
+
+    # =================================================================
+    # Consistency with other tabs
+    # =================================================================
+
+    def sync_clamp_notice(self) -> None:
+        """No clamp on this tab, but the main window calls every tab
+        uniformly so we keep a no-op here."""
+        return

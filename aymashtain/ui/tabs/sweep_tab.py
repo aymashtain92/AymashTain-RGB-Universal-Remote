@@ -1,16 +1,24 @@
+# Original Path: aymashtain/ui/tabs/sweep_tab.py
+
 """Automated parameter sweeps, optionally verified with the camera.
 
-Round 2 changes
----------------
-* Brightness sweeps now run *within* the Options min/max range instead of
+Round 3 Phase 0 fixes
+---------------------
+* Brightness range is read *fresh on every step* directly from
+  ``ctx.settings`` (was already doing this, but the range is now logged
+  once per step when it changes, so a mid-run Options change is visible
+  in the Events tab instead of silent).
+* Sends go through ``ctx.resolve_targets()`` so the new multi-strip
+  selection is honoured. The camera sample still runs once per step.
+* Info line refreshes when Options changes the range -- ``sync_clamp_notice()``
+  is wired from the main window.
+
+Round 2 behaviour kept
+----------------------
+* Brightness sweeps run *within* the Options min/max range instead of
   sweeping 0..1 and getting clamped step by step. If Options says
   20%-80% and the user asked for 12 steps, they get twelve evenly-spaced
-  points between 20% and 80%. Every step is useful; none are wasted on
-  values that the clamp would collapse to the same output.
-* The min / max is read fresh from ``settings`` on every step, so if the
-  user changes Options mid-run the sweep follows.
-* A small info label under the config tells the user why the range is
-  what it is.
+  points between 20% and 80%. Every step is useful; none are wasted.
 """
 
 from __future__ import annotations
@@ -52,11 +60,16 @@ MODES = {
 
 
 class SweepTab(QWidget):
-    def __init__(self, ctx: AppContext, camera_tab=None, parent: QWidget | None = None) -> None:
+    def __init__(
+        self, ctx: AppContext, camera_tab=None, parent: QWidget | None = None
+    ) -> None:
         super().__init__(parent)
         self.ctx = ctx
         self.camera_tab = camera_tab
         self._running = False
+        #: The brightness range (lo, hi) that was in force on the last
+        #: step, so we can log a message only when it actually changes.
+        self._last_range: tuple[int, int] | None = None
 
         layout = QVBoxLayout(self)
 
@@ -152,6 +165,7 @@ class SweepTab(QWidget):
         if self._running:
             return
         self._running = True
+        self._last_range = None
         self.btn_start.setEnabled(False)
         self.btn_stop.setEnabled(True)
         self.table.setRowCount(0)
@@ -176,7 +190,10 @@ class SweepTab(QWidget):
                 if not self._running:
                     break
                 value, frame, expected = self._frame_for(mode, index, steps)
-                sent = await self.ctx.ble.send_hex_all(frame, f"sweep:{mode}")
+                targets = self.ctx.resolve_targets()
+                sent = await self.ctx.ble.send_hex_all(
+                    frame, f"sweep:{mode}", addresses=targets
+                )
                 if sent == 0:
                     failures += 1
 
@@ -185,14 +202,18 @@ class SweepTab(QWidget):
                 if self.chk_verify.isChecked() and self.camera_tab is not None:
                     if settle:
                         await asyncio.sleep(settle)
-                    sample = self.camera_tab.capture_sample(expected, f"{mode}={value}")
+                    sample = self.camera_tab.capture_sample(
+                        expected, f"{mode}={value}"
+                    )
                     if sample is not None:
                         measured = str(sample.rgb)
                         white = f"{sample.white_contamination * 100:.0f}%"
 
                 self._add_row(index + 1, value, frame, sent, measured, white)
                 self.progress.setValue(index + 1)
-                self.ctx.log("sweep", f"[{index + 1}/{steps}] {frame} -> {sent} device(s)")
+                self.ctx.log(
+                    "sweep", f"[{index + 1}/{steps}] {frame} -> {sent} device(s)"
+                )
                 await asyncio.sleep(gap)
         finally:
             self._running = False
@@ -219,17 +240,29 @@ class SweepTab(QWidget):
             )
 
         if mode == "brightness":
-            # Sweep *within* the Options min/max, not 0..1 then clamp.
-            # Read the current settings on every step so a change made
-            # during the sweep is picked up.
-            lo = self.ctx.settings.brightness_min / 100.0
-            hi = self.ctx.settings.brightness_max / 100.0
-            if hi < lo:
-                lo, hi = hi, lo
+            # Read the range fresh from settings on every single step.
+            # The sweep must follow a mid-run Options change, so we never
+            # cache these values across the loop.
+            lo_int = self.ctx.settings.brightness_min
+            hi_int = self.ctx.settings.brightness_max
+            if hi_int < lo_int:
+                lo_int, hi_int = hi_int, lo_int
+
+            # Log when the range changes mid-run so it shows up in Events.
+            current_range = (lo_int, hi_int)
+            if self._last_range != current_range:
+                self.ctx.log(
+                    "sweep",
+                    f"Brightness range now {lo_int}%-{hi_int}%",
+                )
+                self._last_range = current_range
+
+            lo = lo_int / 100.0
+            hi = hi_int / 100.0
             t = index / max(1, steps - 1)
             level = lo + (hi - lo) * t
-            # Belt-and-braces clamp in case min/max were updated between
-            # the read above and the encode below.
+            # Belt-and-braces: clamp_brightness re-reads settings in case
+            # they changed between the read above and the encode below.
             level = self.ctx.settings.clamp_brightness(level)
             return f"{level:.0%}", encode_brightness(level), None
 
@@ -255,7 +288,11 @@ class SweepTab(QWidget):
         lines = ["number,value,frame,sent,measured_rgb,white_pct"]
         for row in range(self.table.rowCount()):
             cells = [
-                (self.table.item(row, column).text() if self.table.item(row, column) else "")
+                (
+                    self.table.item(row, column).text()
+                    if self.table.item(row, column)
+                    else ""
+                )
                 for column in range(self.table.columnCount())
             ]
             lines.append(",".join(cell.replace(",", ";") for cell in cells))

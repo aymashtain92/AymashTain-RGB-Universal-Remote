@@ -1,11 +1,23 @@
+# Original Path: aymashtain/config.py
+
 """Persistent user settings, stored as a single JSON document.
 
-Round 2 additions: theme_mode (light/dark/system), developer_tools lock,
-save_location, brightness_min/max clamp, camera resolution/FPS/exposure/WB
-locks, dedicated audio device picks, per-pattern mic assignment, and window
+Round 2 additions
+-----------------
+theme_mode (light/dark/system), developer_tools lock, save_location,
+brightness_min/max clamp, camera resolution/FPS/exposure/WB locks,
+dedicated audio device picks, per-pattern mic assignment, window
 screen/position/scale memory.
 
-Legacy ``dark_theme`` is kept in sync so nothing that still reads it breaks.
+Round 3 addition
+----------------
+``camera_backend`` -- the OpenCV capture backend the Camera tab should
+try first: ``"auto"`` (DSHOW then MSMF then default), ``"dshow"``
+(DirectShow) or ``"msmf"`` (Media Foundation). Default ``"auto"`` so
+upgrading users do not see a behaviour change.
+
+Legacy ``dark_theme`` is kept in sync so nothing that still reads it
+breaks.
 """
 
 from __future__ import annotations
@@ -25,6 +37,9 @@ THEME_SYSTEM = "system"
 #: Which physical mic a music pattern is driven from.
 MIC_USB_INTERNAL = "usb_internal"      # strip's own USB mic, 4 built-in modes
 MIC_THIRD_PARTY = "third_party"        # PC mic / line-in / file → software-driven
+
+#: Valid values for ``camera_backend``.
+CAMERA_BACKENDS = ("auto", "dshow", "msmf")
 
 
 def _system_prefers_dark() -> bool:
@@ -79,7 +94,7 @@ class Settings:
     # --- Language (stub for future translation) --------------------------
     language: str = "en"
 
-    # --- Save location for exports --------------------------------------
+    # --- Save location for exports ---------------------------------------
     save_location: str = ""
 
     # --- Brightness clamp (internal, never send above max) ---------------
@@ -113,6 +128,8 @@ class Settings:
     camera_exposure_lock: bool = False
     camera_exposure_value: int = -1        # -1 = auto
     camera_wb_lock: bool = False
+    #: Which OpenCV capture backend to try first. Round 3 addition.
+    camera_backend: str = "auto"           # auto | dshow | msmf
 
     # --- Audio -----------------------------------------------------------
     audio_source: str = "microphone"       # microphone | loopback | file
@@ -181,6 +198,12 @@ class Settings:
             settings.theme_mode = THEME_DARK
         settings.brightness_min = max(0, min(100, int(settings.brightness_min)))
         settings.brightness_max = max(0, min(100, int(settings.brightness_max)))
+
+        # Guard the camera backend.
+        backend = (settings.camera_backend or "auto").strip().lower()
+        if backend not in CAMERA_BACKENDS:
+            backend = "auto"
+        settings.camera_backend = backend
 
         settings._path = path
         return settings
